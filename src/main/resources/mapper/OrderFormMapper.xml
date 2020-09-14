@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cosmo.dao.OrderFormMapper" >
+
+  <!--通过订单id集合绑定发票-->
+  <update id="updateInvoiceId" parameterType="java.util.HashMap">
+    update order_form
+    <trim prefix="set" suffixOverrides=",">
+      <trim prefix="invoice_id =case" suffix="end,">
+        <foreach collection="map.orderIdList" item="orderId" index="index">
+          when id=#{orderId} then #{map.invoiceId}
+        </foreach>
+      </trim>
+      <trim prefix="invoice_type =case" suffix="end,">
+        <foreach collection="map.orderIdList" item="orderId" index="index">
+          when id=#{orderId} then #{map.invoiceType}
+        </foreach>
+      </trim>
+    </trim>
+    where id in
+    <foreach collection="map.orderIdList" item="orderId" index="index" open="(" separator="," close=")">
+      #{orderId}
+    </foreach>
+  </update>
+
+  <select id="count" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+    select count(id) from order_form where order_time_create <![CDATA[ >= ]]> #{time.create} and order_time_create <![CDATA[ < ]]> #{time.end}
+  </select>
+</mapper>

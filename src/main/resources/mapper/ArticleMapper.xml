@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cosmo.dao.ArticleMapper">
+
+<resultMap id="BaseResultMap" type="com.cosmo.entity.Article">
+    <id column="id" property="id" jdbcType="INTEGER"/>
+    <id column="user_id" property="userId" jdbcType="INTEGER"/>
+    <id column="browse_number" property="browseNumber" jdbcType="INTEGER"/>
+    <id column="praise_number" property="praiseNumber" jdbcType="INTEGER"/>
+    <result column="time" property="time" jdbcType="VARCHAR"/>
+    <result column="type" property="type" jdbcType="INTEGER"/>
+    <result column="title" property="title" jdbcType="VARCHAR"/>
+    <result column="info_array" property="infoArray" jdbcType="VARCHAR"/>
+    <result column="img_array" property="imgArray" jdbcType="VARCHAR"/>
+    <result column="video" property="video" jdbcType="VARCHAR"/>
+    <result column="classify_id" property="classifyId" jdbcType="INTEGER"/>
+</resultMap>
+
+<insert id="addArticle" parameterType="com.cosmo.entity.Article">
+    insert into article
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >id,</if>
+      <if test="userId != null" >user_id,</if>
+      <if test="browseNumber != null" >browse_number,</if>
+      <if test="praiseNumber != null" >praise_number,</if>
+      <if test="time != null" >time,</if>
+      <if test="type != null" >type,</if>
+      <if test="title != null" >title,</if>
+      <if test="infoArray != null" >info_array,</if>
+      <if test="imgArray != null" >img_array,</if>
+      <if test="video != null" >video,</if>
+      <if test="classifyId != null" >classify_id,</if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >#{article.id},</if>
+      <if test="userId != null" >#{article.userId},</if>
+      <if test="browseNumber != null" >#{article.browseNumber},</if>
+      <if test="praiseNumber != null" >#{article.praiseNumber},</if>
+      <if test="time != null" >#{article.time},</if>
+      <if test="type != null" >#{article.type},</if>
+      <if test="title != null" >#{article.title},</if>
+      <if test="infoArray != null" >#{article.infoArray},</if>
+      <if test="imgArray != null" >#{article.imgArray},</if>
+      <if test="video != null" >#{article.video},</if>
+      <if test="classifyId != null" >#{article.classifyId},</if>
+    </trim>
+</insert>
+<select id="selectArticle" resultMap="BaseResultMap" parameterType="java.lang.Long">
+    select id, user_id, browse_number, praise_number, time, type, title, info_array, img_array, video, classify_id
+    from article where id = #{articleId}
+</select>
+<select id="selectArticleMap" resultType="java.util.Map" parameterType="java.lang.Long">
+    select id, user_id, browse_number, praise_number, time, type, title, info_array, img_array, video, classify_id
+    from article where id = #{articleId}
+</select>
+<delete id="delArticle" parameterType="java.lang.Long">
+    delete from article where id = #{articleId}
+</delete>
+<select id="articleList" resultType="java.util.Map" parameterType="com.cosmo.entity.Article">
+    select a.id, ui.wx_name, a.browse_number, a.praise_number, date_format(a.time,'%Y-%c-%d %h:%i:%s') AS time,
+           a.type, a.title, a.info_array, a.img_array, a.video, a.classify_id, ac.name classify_name
+    from article a left join article_classify ac on a.classify_id=ac.id left join user_info ui on a.user_id=ui.id
+    where 1=1 <if test="article.classifyId != null" >and a.classify_id = #{article.classifyId}</if>
+    <if test="article.userId != null" >and a.user_id = #{userId}</if>
+    <if test="article.title != null" ><if test="article.title != '%%'" >and a.title like #{article.title}</if></if>
+    order by a.id desc
+</select>
+<update id="updateArticle" parameterType="com.cosmo.entity.Article">
+    update article
+    <set >
+      <if test="userId != null" >user_id=#{userId},</if>
+      <if test="browseNumber != null" >browse_number=#{browseNumber},</if>
+      <if test="praiseNumber != null" >praise_number=#{praiseNumber},</if>
+      <if test="time != null" >time=#{time},</if>
+      <if test="type != null" >type=#{type},</if>
+      <if test="title != null" >title=#{title},</if>
+      <if test="infoArray != null" >info_array=#{infoArray},</if>
+      <if test="imgArray != null" >img_array=#{imgArray},</if>
+      <if test="video != null" >video=#{video},</if>
+      <if test="classifyId != null" >classify_id=#{classifyId},</if>
+    </set>
+    where id = #{id}
+</update>
+<select id="commentList" resultType="java.util.Map" parameterType="java.util.HashMap">
+    select c.id, u.id user_id, u.wx_name, c.article_id, c.parent_id, c.parents, c.sons, c.praise_number, date_format(c.time,'%Y-%c-%d %h:%i:%s') AS time, c.info
+    from comment c left join user_info u on c.user_id=u.id
+    where 1=1 <if test="map.articleId != null" >and article_id = #{map.articleId}</if>
+    <if test="map.parentId != null" >and parent_id = #{map.parentId}</if>
+    order by c.id desc
+</select>
+</mapper>

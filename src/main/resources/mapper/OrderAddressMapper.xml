@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cosmo.dao.OrderAddressMapper" >
+  <resultMap id="BaseResultMap" type="com.cosmo.entity.OrderAddress" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="order_id" property="orderId" jdbcType="INTEGER" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="user_phone" property="userPhone" jdbcType="VARCHAR" />
+    <result column="user_fax" property="userFax" jdbcType="VARCHAR" />
+    <result column="user_address" property="userAddress" jdbcType="VARCHAR" />
+    <result column="user_detail_address" property="userDetailAddress" jdbcType="VARCHAR" />
+    <result column="order_address_status" property="orderAddressStatus" jdbcType="INTEGER" />
+    <result column="order_address_type" property="orderAddressType" jdbcType="INTEGER" />
+    <result column="order_address_freight_price" property="orderAddressFreightPrice" jdbcType="DECIMAL" />
+    <result column="order_address_freight" property="orderAddressFreight" jdbcType="DECIMAL" />
+    <result column="order_address_rough_weight" property="orderAddressRoughWeight" jdbcType="VARCHAR" />
+    <result column="order_address_price" property="orderAddressPrice" jdbcType="DECIMAL" />
+    <result column="order_address_tray_number" property="orderAddressTrayNumber" jdbcType="INTEGER" />
+    <result column="order_address_shop_status" property="orderAddressShopStatus" jdbcType="INTEGER" />
+    <result column="order_address_logistics_number" property="orderAddressLogisticsNumber" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <!--查询所有发货地址-->
+  <select id="selectOrderAddressList" parameterType="java.util.HashMap" resultMap="BaseResultMap">
+    select * from (select * from order_address
+                    where order_id in (select id from order_form where order_status = 2)
+                    and order_address_status in (0,1)) orderAddress
+    where orderAddress.order_address_shop_status = #{orderAddressShopStatus}
+    <if test="map.companNyame != '%%'" >
+        and orderAddress.company_name like #{map.companNyame}
+    </if>
+    <if test="map.userName != '%%'" >
+        and orderAddress.user_name like #{map.userName}
+    </if>
+    <if test="map.userPhone != '%%'" >
+        and orderAddress.user_phone like #{map.userPhone}
+    </if>
+    <if test="map.userAddress != '%%'" >
+        and orderAddress.user_address like #{map.userAddress}
+    </if>
+    <if test="map.orderAddressStatus != ''" >
+        and orderAddress.order_address_status = #{map.orderAddressStatus}
+    </if>
+</select>
+</mapper>

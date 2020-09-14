@@ -1,0 +1,105 @@
+
+server:
+  port: 8082
+
+# 打印sql
+#logging:
+#  level:
+#    com.cosmo.dao : debug
+
+spring:
+  mvc:
+    dispatch-options-request: true
+  datasource:
+    username: root
+    url: jdbc:mysql://122.51.51.223:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+#    url: jdbc:mysql://localhost:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    password: cosmosql2020hwm
+#    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 8
+      min-idle: 1
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runsMillis: 60000
+      min-evictable-idle-timeMillis: 300000
+      validation-query: select 'x' FROM DUAL
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: true
+      max-open-prepared-statements: 20
+      max-pool-prepared-statement-per-connection-size: 20
+      filters: stat
+      connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      use-global-data-source-stat: true
+  redis:
+    shiro:
+      host: localhost
+      port: 6379
+      timeout: 0
+#      password:
+  servlet:
+    multipart:
+      enabled: true #是否启用http上传处理
+      max-request-size: 2000MB #最大请求文件的大小
+      max-file-size: 1000MB #设置单个文件最大长度
+      file-size-threshold: 200MB #当文件达到多少时进行磁盘写入
+
+## pdf export config
+pdfExport:
+  fontSimsun: font/SimSun.ttf
+  fontSimsunUrl: /root/java/font/SimSun.ttf
+  employeeKpiFtl: pdf_export_employee_kpi.ftl
+  employeeKpiFtlName: pdf_export_employee_kpi.ftl
+  employeeKpiFtlUrl: /root/java/pdf
+
+#redis配置
+redis:
+  #是否开启redis缓存 true开启 false关闭
+  open: true
+  #Redis服务器地址
+  host: localhost
+  #Redis服务器连接端口
+  port: 6379
+  #Redis数据库索引（默认为0）
+  database: 0
+  jedis:
+    pool:
+      #连接池最大连接数（使用0表示没有限制）
+      max-active: 500
+      #连接池最大阻塞等待时间（使用0表示没有限制）
+      max-wait: 3000
+      #连接池中的最大空闲连接
+      max-idle: 100
+      #连接池中的最小空闲连接
+      min-idle: 50
+      #控制一个pool可分配多少个jedis实例,用来替换上面的redis.maxActive,如果是jedis 2.4以后用该属性
+      maxTotal: 500
+  #连接超时时间（毫秒）
+  timeout: 3000
+  #在空闲时检查有效性, 默认false
+  testWhileIdle: true
+  #是否在从池中取出连接前进行检验,如果检验失败,则从池中去除连接并尝试取出另一个
+  testOnBorrow: true
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.cosmo.entity
+
+wechat:
+  #appid
+  appId: wxef030d1170877ab1
+  #appSecret
+  appSecret: a4ae8ae1763887c496da4adbf4f8622d
+  #商户id
+  mchId: 1587411501
+  #商户秘钥
+  mchKey: 7da710de87674939a29d74dcac2cuadf
+  #商户证书
+  keyPath: cert/apiclient_cert.p12
+  #微信支付异步通知调用的方法
+  notifyUrl:  https://www.kscosmo.com/api/app/pay/notify
+#  notifyUrl:  http://jg7yrd.natappfree.cc/app/pay/notify

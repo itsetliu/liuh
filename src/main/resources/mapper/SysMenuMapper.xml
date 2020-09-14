@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cosmo.dao.SysMenuMapper" >
+
+  <!--查询所有权限及子下权限-->
+  <select id="sysMenuList" resultMap="sysMenuListMap" parameterType="java.lang.Long">
+    select menu1.id, menu1.title, menu1.url, menu1.pid, menu1.status, menu1.icon, menu1.create_id, menu1.create_time,
+    menu2.id id1, menu2.title title1, menu2.url url1, menu2.pid pid1, menu2.status status1, menu2.icon icon1, menu2.create_id create_id, menu2.create_time create_time1
+    from sys_menu menu1 left join sys_menu menu2 on menu1.id = menu2.pid
+    where menu1.pid = #{pid}
+  </select>
+  <resultMap id="sysMenuListMap" type="com.cosmo.entity.SysMenu" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="url" property="url" jdbcType="VARCHAR" />
+    <result column="pid" property="pid" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="icon" property="icon" jdbcType="VARCHAR" />
+    <result column="create_id" property="createId" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <collection property="menuList" ofType="com.cosmo.entity.SysMenu">
+      <id column="id1" property="id" jdbcType="INTEGER" />
+      <result column="title1" property="title" jdbcType="VARCHAR" />
+      <result column="url1" property="url" jdbcType="VARCHAR" />
+      <result column="pid1" property="pid" jdbcType="INTEGER" />
+      <result column="status1" property="status" jdbcType="INTEGER" />
+      <result column="icon1" property="icon" jdbcType="VARCHAR" />
+      <result column="create_id1" property="createId" jdbcType="INTEGER" />
+      <result column="create_time1" property="createTime" jdbcType="TIMESTAMP" />
+    </collection>
+  </resultMap>
+  <!--根据身份id查询权限及子下权限-->
+  <select id="sysRoleMenuList" resultMap="sysMenuListMap" parameterType="java.lang.Long">
+    select menu1.id, menu1.title, menu1.url, menu1.pid, menu1.status, menu1.icon, menu1.create_id, menu1.create_time,
+    menu2.id id1, menu2.title title1, menu2.url url1, menu2.pid pid1, menu2.status status1, menu2.icon icon1, menu2.create_id create_id, menu2.create_time create_time1
+    from sys_menu menu1 left join sys_menu menu2 on menu1.id = menu2.pid
+    where menu1.pid = 0 and menu1.id in (select menu_id from sys_role_menu where role_id = #{roleId})
+  </select>
+
+  <!--根据身份id查询子下权限-->
+  <select id="sysMenuListRoleSon" parameterType="java.lang.Long" resultType="com.cosmo.entity.SysMenu">
+    select *
+    from sys_menu menu
+    where menu.pid &lt;&gt; 0 and menu.id in (select menu_id from sys_role_menu where role_id = #{roleId})
+  </select>
+
+  <!--根据身份id查询子下权限-->
+  <select id="sysMenuListSon" resultType="com.cosmo.entity.SysMenu">
+    select *
+    from sys_menu menu
+    where menu.pid &lt;&gt; 0 and menu.pid &lt;&gt; 1
+  </select>
+
+</mapper>

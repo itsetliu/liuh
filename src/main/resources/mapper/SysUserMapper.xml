@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cosmo.dao.SysUserMapper" >
+
+  <!--根据用户账号查询-->
+  <select id="findByUsername" resultType="com.cosmo.entity.SysUser" parameterType="java.lang.String">
+    select * from sys_user where user_name = #{userName}
+  </select>
+
+
+  <!--根据用户id查询-->
+  <!--<select id="findByIdRole" resultMap="findByIdRoleMap" parameterType="java.lang.String">
+    select user.id id, user.user_name user_name, user.nick_name nick_name, user.phone phone,
+    user.email email, user.`status` `status`, user.login_count login_count, user.create_time create_time,
+    user.last_login_time last_login_time, role.`name` role_name, menu.title title, menu.icon icon,
+    menu.url url, menu.pid pid
+    from sys_user user LEFT JOIN sys_user_role user_role ON user.id = user_role.user_id
+    LEFT JOIN sys_role role ON user_role.role_id = role.id
+    LEFT JOIN sys_role_menu role_menu ON role.id = role_menu.role_id
+    LEFT JOIN sys_menu menu ON role_menu.menu_id = menu.id
+    where user.id = #{userName}
+  </select>
+  <resultMap id="findByIdRoleMap" type="com.cosmo.entity.SysUser" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="login_count" property="loginCount" jdbcType="INTEGER" />
+    <result column="create_id" property="createId" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="last_login_time" property="lastLoginTime" jdbcType="TIMESTAMP" />
+    <collection property="roleList" ofType="com.cosmo.entity.SysRole">
+      <result column="role_name" property="name" jdbcType="VARCHAR" />
+    </collection>
+    <collection property="menuList" ofType="com.cosmo.entity.SysMenu">
+      <result column="title" property="title" jdbcType="VARCHAR" />
+      <result column="icon" property="icon" jdbcType="VARCHAR" />
+      <result column="url" property="url" jdbcType="VARCHAR" />
+      <result column="pid" property="pid" jdbcType="INTEGER" />
+    </collection>
+  </resultMap>-->
+
+  <!--通过用户id查询身份-->
+  <select id="roleList" parameterType="java.lang.Long" resultType="com.cosmo.entity.SysRole">
+    select role.* from sys_user_role user_role left join sys_role role on user_role.role_id = role.id
+    where user_role.user_id = #{userId} and role.status = 1
+  </select>
+
+
+  <select id="menuList" parameterType="java.lang.Long" resultMap="menuListMap">
+      select menu1.id, menu1.title, menu1.icon, menu2.title title2, menu2.url url2, menu2.icon icon2
+      from (select menu.*
+      from sys_role_menu role_menu left join sys_menu menu on role_menu.menu_id = menu.id
+      where role_menu.role_id in(select role.id
+      from sys_user_role user_role left join sys_role role on user_role.role_id = role.id
+      where user_role.user_id = #{userId})
+      and menu.pid = 0 and menu.status = 1 ) menu1 left join (select menu.*
+      from sys_role_menu role_menu left join sys_menu menu on role_menu.menu_id = menu.id
+      where role_menu.role_id in(select role.id
+      from sys_user_role user_role left join sys_role role on user_role.role_id = role.id
+      where user_role.user_id = #{userId})
+      and menu.pid &lt;&gt; 0 and menu.status = 1 ) menu2 on menu1.id = menu2.pid
+      where menu2.status = 1
+  </select>
+  <resultMap id="menuListMap" type="com.cosmo.entity.pack.Menu" >
+      <id column="id" property="id" jdbcType="INTEGER" />
+      <result column="title" property="title" jdbcType="VARCHAR" />
+      <result column="icon" property="icon" jdbcType="VARCHAR" />
+      <collection property="subs" ofType="com.cosmo.entity.pack.Sub">
+          <result column="title2" property="title" jdbcType="VARCHAR" />
+          <result column="icon2" property="icon" jdbcType="VARCHAR" />
+          <result column="url2" property="path" jdbcType="VARCHAR" />
+      </collection>
+  </resultMap>
+
+
+  <update id="updateLogin" parameterType="java.lang.String">
+    update sys_user set login_count=login_count+1, last_login_time=now() where user_name =#{userName}
+  </update>
+</mapper>
