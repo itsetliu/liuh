@@ -48,6 +48,8 @@ public class OrderService {
     @Resource
     private UserPriceInfoMapper userPriceInfoMapper;
     @Resource
+    private UserMemberPriceInfoMapper userMemberPriceInfoMapper;
+    @Resource
     private UserMemberModelMapper userMemberModelMapper;
     @Resource
     private UserRemindMapper userRemindMapper;
@@ -1017,9 +1019,7 @@ public class OrderService {
             if (userInfoList.size()>0){
                 UserInfo userInfo1 = userInfoList.get(0);
                 //判断该订单用户是否是黑钻会员
-                if (userInfo.getMemberId()==userInfo1.getMemberId()){
-
-                }else {
+                if (userInfo.getMemberId()!=userInfo1.getMemberId()){
                     Map<String,String> map1 = new HashMap<>();
                     BigDecimal orderPrice = new BigDecimal(0);
                     BigDecimal orderPriceSon = new BigDecimal(0);
@@ -1058,6 +1058,13 @@ public class OrderService {
                             orderParent.setStatus(0);
                             orderParent.setOrderTimeCreate(new Date());
                             this.orderParentMapper.insert(orderParent);
+                            UserMemberPriceInfo userMemberPriceInfo = new UserMemberPriceInfo();
+                            userMemberPriceInfo.setInfo("支付下线订单:"+orderForm.getOrderNumber());
+                            userMemberPriceInfo.setPrice(orderPrice);
+                            userMemberPriceInfo.setTime(new Date());
+                            userMemberPriceInfo.setType(1);
+                            userMemberPriceInfo.setUserId(userInfo.getId());
+                            this.userMemberPriceInfoMapper.insert(userMemberPriceInfo);
                         }else {
                             //不足扣除
                             UserRemind userRemind = new UserRemind();
@@ -1074,12 +1081,15 @@ public class OrderService {
         }else if(orderStatus.equals(3)){
             QueryWrapper<OrderParent> orderParentQueryWrapper = new QueryWrapper<>();
             orderParentQueryWrapper.eq("order_id",orderFormId);
-            OrderParent orderParent = orderParentMapper.selectList(orderParentQueryWrapper).get(0);
-            UserInfo userInfo = userInfoMapper.selectById(orderParent.getUserId());
-            userInfo.setMemberPrice(userInfo.getMemberPrice().add(orderParent.getOrderPriceSon()));
-            this.userInfoMapper.updateById(userInfo);
-            orderParent.setStatus(1);
-            this.orderParentMapper.updateById(orderParent);
+            List<OrderParent> orderParentList = orderParentMapper.selectList(orderParentQueryWrapper);
+            if (orderParentList.size()>0){//判断当前订单是否拥有上线订单
+                OrderParent orderParent = orderParentList.get(0);
+                UserInfo userInfo = userInfoMapper.selectById(orderParent.getUserId());
+                userInfo.setWithdrawPrice(userInfo.getWithdrawPrice().add(orderParent.getOrderPriceSon()));
+                orderParent.setStatus(1);
+                this.orderParentMapper.updateById(orderParent);
+                this.userInfoMapper.updateById(userInfo);
+            }
         }
         orderForm.setOrderStatus(orderStatus);
         return orderFormMapper.updateById(orderForm);

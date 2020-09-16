@@ -102,24 +102,16 @@ public class WxPayService {
                 String nickName = userInfoJSON.getString("nickName");
                 Map<String,Object> userInfo1 = userInfoMapper.selectByOpenId(openId);
                 UserInfo userInfo2 = new UserInfo();
-                Long userId = null;
                 Integer i = null;
                 Map<String,String> map2 = new HashMap<>();
                 if (userInfo1!=null){
-                    map2.put("status",String.valueOf(userInfo1.get("status")));
-                    Integer memberId = Integer.parseInt(userInfo1.get("member_id").toString());
-                    if (memberId==0) map2.put("memberName","无会员");
-                    else map2.put("memberName",String.valueOf(userMemberMapper.selectById(memberId).getName()));
                     QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
                     userInfoQueryWrapper.eq("open_id",openId);
                     userInfo2.setLoginCount(Integer.parseInt(userInfo1.get("login_count").toString())+1);
                     userInfo2.setLastLoginTime(ft.format(new Date()));
                     userInfo2.setWxName(nickName);
                     i = userInfoMapper.update(userInfo2,userInfoQueryWrapper);
-                    userId = Long.valueOf(userInfo1.get("id").toString());
                 }else {
-                    map2.put("status","0");
-                    map2.put("memberName","无会员");
                     userInfo2.setLastLoginTime(ft.format(new Date()));
                     userInfo2.setLoginCount(1);
                     userInfo2.setCreateTime(ft.format(new Date()));
@@ -132,9 +124,13 @@ public class WxPayService {
                     for (int l=0;l<6;l++){result+=random.nextInt(10);}
                     userInfo2.setReferralCode(result);
                     i = userInfoMapper.insert(userInfo2);
-                    userId = userInfo2.getId();
+                    userInfo1 = userInfoMapper.selectByOpenId(openId);
                 }
-                map2.put("userId", userId.toString());
+                map2.put("status",String.valueOf(userInfo1.get("status")));
+                Integer memberId = Integer.parseInt(userInfo1.get("member_id").toString());
+                if (memberId==0) map2.put("memberName","无会员");
+                else map2.put("memberName",String.valueOf(userMemberMapper.selectById(memberId).getName()));
+                map2.put("userId", userInfo1.get("id").toString());
                 map1.put("code", "200");
                 map1.put("msg", "解密成功");
                 map1.put("data", JSON.toJSONString(map2));

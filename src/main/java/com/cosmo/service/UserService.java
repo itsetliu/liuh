@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cosmo.dao.*;
 import com.cosmo.entity.*;
 import com.cosmo.util.*;
+import org.apache.commons.collections.map.HashedMap;
 import org.springframework.cglib.beans.BeanMap;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +31,15 @@ public class UserService {
     @Resource
     private UserPriceInfoMapper userPriceInfoMapper;
     @Resource
+    private UserMemberPriceInfoMapper userMemberPriceInfoMapper;
+    @Resource
     private UserMemberMapper userMemberMapper;
     @Resource
     private UserMemberApplyMapper userMemberApplyMapper;
     @Resource
     private UserMemberModelMapper userMemberModelMapper;
+    @Resource
+    private UserWithdrawPriceApplyMapper userWithdrawPriceApplyMapper;
     @Resource
     private HatCityMapper hatCityMapper;
     @Resource
@@ -471,6 +476,19 @@ public class UserService {
     }
 
     /**
+     * 通过用户id查询会员预存金额和待提现金额
+     * @param userId
+     * @return
+     */
+    public Map<String,String> userMemberPrice(String userId){
+        UserInfo userInfo = userInfoMapper.selectById(Long.valueOf(userId));
+        Map<String,String> map = new HashedMap();
+        map.put("memberPrice",userInfo.getMemberPrice().toString());
+        map.put("withdrawPrice",userInfo.getWithdrawPrice().toString());
+        return map;
+    }
+
+    /**
      * 分页查询用户账户明细
      * @param pageNum
      * @return
@@ -481,6 +499,20 @@ public class UserService {
         Page page = new Page(pageNum,10);
         IPage<UserPriceInfo> userPriceInfoList = userPriceInfoMapper.selectPage(page,userPriceInfoQueryWrapper);
         PageInfo pageInfo = new PageInfo(userPriceInfoList);
+        return pageInfo;
+    }
+
+    /**
+     * 分页查询用户会员预存金额和待提现金额明细
+     * @param pageNum
+     * @return
+     */
+    public PageInfo userMemberPriceList(Integer pageNum,String userId,String type){
+        QueryWrapper<UserMemberPriceInfo> userMemberPriceInfoQueryWrapper = new QueryWrapper<>();
+        userMemberPriceInfoQueryWrapper.eq("user_id",userId).eq("type",type).orderByDesc("time");
+        Page page = new Page(pageNum,10);
+        IPage<UserMemberPriceInfo> userMemberPriceInfoList = userMemberPriceInfoMapper.selectPage(page,userMemberPriceInfoQueryWrapper);
+        PageInfo pageInfo = new PageInfo(userMemberPriceInfoList);
         return pageInfo;
     }
 
@@ -739,6 +771,13 @@ public class UserService {
         userInfo.setMemberPrice(memberPrice.add(userMemberApply.getPrice()));
         Integer i = userInfoMapper.updateById(userInfo);
         if (i<=0) return i;
+        UserMemberPriceInfo userMemberPriceInfo = new UserMemberPriceInfo();
+        userMemberPriceInfo.setInfo("开通"+userMember.getName());
+        userMemberPriceInfo.setPrice(memberPrice);
+        userMemberPriceInfo.setTime(new Date());
+        userMemberPriceInfo.setType(0);
+        userMemberPriceInfo.setUserId(userInfo.getId());
+        this.userMemberPriceInfoMapper.insert(userMemberPriceInfo);
         userMemberApply.setStatus(1);
         return userMemberApplyMapper.updateById(userMemberApply);
     }
@@ -809,6 +848,39 @@ public class UserService {
         else userInfo.setSerialNumber(userInfoMap.get("serialNumber"));
         userInfo.setStatus(Integer.parseInt(userInfoMap.get("status")));
         userInfo.setMemberPrice(new BigDecimal(userInfoMap.get("memberPrice")));
+        userInfo.setWithdrawPrice(new BigDecimal(userInfoMap.get("withdrawPrice")));
         return userInfoMapper.updateById(userInfo);
+    }
+
+    /**
+     * 新增待提现金额提现申请
+     * @param map
+     * @return
+     *  201: 该用户不存在
+     *  202: 该用户待提现金额不足以本次申请扣除
+     */
+    public Integer addUserWithdrawPriceApply(Map<String,String> map){
+        UserInfo userInfo = userInfoMapper.selectById(Long.valueOf(map.get("userId")));
+        if (userInfo==null) return 201;//该用户不存在
+        BigDecimal withdrawPrice = new BigDecimal(map.get("withdrawPrice"));
+        if (userInfo.getWithdrawPrice().compareTo(withdrawPrice)==-1) return 202;//该用户待提现金额不足以本次申请扣除
+        userInfo.setWithdrawPrice(userInfo.getWithdrawPrice().subtract(withdrawPrice));
+        this.userInfoMapper.updateById(userInfo);
+        UserMemberPriceInfo userMemberPriceInfo = new UserMemberPriceInfo();
+        userMemberPriceInfo.setInfo("待提现金额提现申请");
+        userMemberPriceInfo.setPrice(withdrawPrice);
+        userMemberPriceInfo.setTime(new Date());
+        userMemberPriceInfo.setType(2);
+        userMemberPriceInfo.setUserId(userInfo.getId());
+        this.userMemberPriceInfoMapper.insert(userMemberPriceInfo);
+        UserWithdrawPriceApply userWithdrawPriceApply = new UserWithdrawPriceApply();
+        userWithdrawPriceApply.setUserId(userInfo.getId());
+        userWithdrawPriceApply.setName(map.get("name"));
+        userWithdrawPriceApply.setPhone(map.get("phone"));
+        userWithdrawPriceApply.setBankName(map.get("bankName"));
+        userWithdrawPriceApply.setBankNumber(map.get("bankNumder"));
+        userWithdrawPriceApply.setCardholder(map.get("cardholder"));
+        userWithdrawPriceApply.setStatus(0);
+        return userWithdrawPriceApplyMapper.insert(userWithdrawPriceApply);
     }
 }

@@ -5,6 +5,7 @@ import com.cosmo.entity.*;
 import com.cosmo.service.UserService;
 import com.cosmo.util.CommonResult;
 import com.cosmo.util.*;
+import org.apache.commons.collections.map.HashedMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -480,6 +481,18 @@ public class UserController {
     }
 
     /**
+     * 通过用户id查询会员预存金额和待提现金额
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/userMemberPrice")
+    public CommonResult userMemberPrice(HttpServletRequest request){
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        return new CommonResult(200,"成功",userService.userMemberPrice(userId));
+    }
+
+    /**
      * 分页查询用户账户明细
      * @param request
      * @return
@@ -491,6 +504,24 @@ public class UserController {
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         PageInfo pageInfo = userService.userPriceList(Integer.parseInt(pageNum),Integer.parseInt(userId));
+        if (pageInfo.getList().size()>0)return new CommonResult(200,"查询成功",pageInfo);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 分页查询用户会员预存金额和待提现金额明细
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/userMemberPriceList")
+    public CommonResult userMemberPriceList(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum = "1";
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        String type = request.getParameter("type");
+        if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空");
+        PageInfo pageInfo = userService.userMemberPriceList(Integer.parseInt(pageNum),userId,type);
         if (pageInfo.getList().size()>0)return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -804,15 +835,51 @@ public class UserController {
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
         String memberPrice = request.getParameter("memberPrice");
         if (StringUtil.isEmpty(memberPrice)) return new CommonResult(500,"memberPrice 为空");
+        String withdrawPrice = request.getParameter("withdrawPrice");
+        if (StringUtil.isEmpty(withdrawPrice)) return new CommonResult(500,"withdrawPrice 为空");
         Map<String,String> map = new HashMap<>();
         map.put("userId",userId);map.put("memberId",memberId);map.put("price",price);
         map.put("goldCoin",goldCoin);map.put("serialNumber",serialNumber);
         map.put("status",status);map.put("memberPrice",memberPrice);
+        map.put("withdrawPrice",withdrawPrice);
         Integer i = userService.updateUserInfo(map);
         if (i==201) return new CommonResult(201,"该用户不存在");
         else if (i==202) return new CommonResult(201,"该会员类型不存在");
         else if (i==203) return new CommonResult(201,"该编号已存在");
         else if (i>0) return new CommonResult(200,"修改成功");
         else return new CommonResult(201,"修改失败");
+    }
+
+    /**
+     * 新增待提现金额提现申请
+     * @param request
+     * @return
+     */
+    @PostMapping("/app/user/addUserWithdrawPriceApply")
+    public CommonResult addUserWithdrawPriceApply(HttpServletRequest request){
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        String withdrawPrice = request.getParameter("withdrawPrice");
+        if (StringUtil.isEmpty(withdrawPrice)) return new CommonResult(500,"withdrawPrice 为空");
+        String name = request.getParameter("name");
+        if (StringUtil.isEmpty(name)) return new CommonResult(500,"name 为空");
+        String phone = request.getParameter("phone");
+        if (StringUtil.isEmpty(phone)) return new CommonResult(500,"phone 为空");
+        String bankName = request.getParameter("bankName");
+        if (StringUtil.isEmpty(bankName)) return new CommonResult(500,"bankName 为空");
+        String bankNumder = request.getParameter("bankNumder");
+        if (StringUtil.isEmpty(bankNumder)) return new CommonResult(500,"bankNumder 为空");
+        String cardholder = request.getParameter("cardholder");
+        if (StringUtil.isEmpty(cardholder)) return new CommonResult(500,"cardholder 为空");
+        Map<String,String> map = new HashedMap();
+        map.put("userId",userId);map.put("withdrawPrice",withdrawPrice);
+        map.put("name",name);map.put("phone",phone);
+        map.put("bankName",bankName);map.put("bankNumder",bankNumder);
+        map.put("cardholder",cardholder);
+        Integer i = userService.addUserWithdrawPriceApply(map);
+        if (i==201) return new CommonResult(201,"该用户不存在");
+        else if (i==202) return new CommonResult(201,"该用户待提现金额不足以本次申请扣除");
+        else if (i>0) return new CommonResult(200,"申请成功");
+        else return new CommonResult(200,"申请失败");
     }
 }
