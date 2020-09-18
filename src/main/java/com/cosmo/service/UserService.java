@@ -881,6 +881,42 @@ public class UserService {
         userWithdrawPriceApply.setBankNumber(map.get("bankNumder"));
         userWithdrawPriceApply.setCardholder(map.get("cardholder"));
         userWithdrawPriceApply.setStatus(0);
+        userWithdrawPriceApply.setTime(new Date());
+        userWithdrawPriceApply.setWithdrawPrice(withdrawPrice);
         return userWithdrawPriceApplyMapper.insert(userWithdrawPriceApply);
+    }
+
+    /**
+     * 分页查询待提现金额提现申请
+     * @param map
+     * @return
+     */
+    public PageInfo userWithdrawPriceApplyLitsPage(Map<String,String> map){
+        QueryWrapper<UserWithdrawPriceApply> userWithdrawPriceApplyQueryWrapper = new QueryWrapper<>();
+        userWithdrawPriceApplyQueryWrapper.eq("status",map.get("status"));
+        if (!StringUtil.isEmpty(map.get("name"))) userWithdrawPriceApplyQueryWrapper.like("name",map.get("name"));
+        if (!StringUtil.isEmpty(map.get("phone"))) userWithdrawPriceApplyQueryWrapper.like("phone",map.get("phone"));
+        if (!StringUtil.isEmpty(map.get("bankName"))) userWithdrawPriceApplyQueryWrapper.like("bank_name",map.get("bankName"));
+        if (!StringUtil.isEmpty(map.get("bankNumder"))) userWithdrawPriceApplyQueryWrapper.like("bank_number",map.get("bankNumder"));
+        if (!StringUtil.isEmpty(map.get("cardholder"))) userWithdrawPriceApplyQueryWrapper.like("cardholder",map.get("cardholder"));;
+        Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
+        IPage userWithdrawPriceApplyList = userWithdrawPriceApplyMapper.selectMapsPage(page,userWithdrawPriceApplyQueryWrapper);
+        PageInfo pageInfo = new PageInfo(userWithdrawPriceApplyList);
+        for (HashMap<String,Object> userWithdrawPriceApplyMap:(List<HashMap<String,Object>>)pageInfo.getList()){
+            UserInfo userInfo = userInfoMapper.selectById(Long.valueOf(userWithdrawPriceApplyMap.get("user_id").toString()));
+            userWithdrawPriceApplyMap.put("user_name",userInfo.getWxName());
+        }
+        return pageInfo;
+    }
+
+    /**
+     * 修改带提现金额申请状态
+     * @param map
+     * @return
+     */
+    public Integer userWithdrawPriceApplyStatus(Map<String,String> map){
+        UserWithdrawPriceApply userWithdrawPriceApply = userWithdrawPriceApplyMapper.selectById(map.get("userWithdrawPriceApplyId"));
+        userWithdrawPriceApply.setStatus(Integer.parseInt(map.get("status")));
+        return userWithdrawPriceApplyMapper.updateById(userWithdrawPriceApply);
     }
 }

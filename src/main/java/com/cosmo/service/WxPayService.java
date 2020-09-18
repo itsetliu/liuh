@@ -284,6 +284,8 @@ public class WxPayService {
                 payWx.setType(0);
                 this.addPayWx(payWx);
             }
+            order.setCashDepositPrice(new BigDecimal(cashDeposit));
+            this.orderFormMapper.updateById(order);
             return this.goPay(paymentPo);
         }else {//用户余额支付
             Map<String,String> map = new HashMap<>();
@@ -299,6 +301,8 @@ public class WxPayService {
             if (i<=0) { map.put("msg","支付失败"); return map; }
             redisUtil.delete("orderCode"+order.getOrderNumber());
             order.setOrderStatus(1);
+            order.setCashDepositType(1);
+            order.setCashDepositPrice(new BigDecimal(cashDeposit));
             i = orderFormMapper.updateById(order);
             QueryWrapper<Config> configQueryWrapper1 = new QueryWrapper<>();
             configQueryWrapper1.eq("code","orderTime");
@@ -333,6 +337,7 @@ public class WxPayService {
             orderFormQueryWrapper.eq("order_number",orderNumber);
             OrderForm order = orderFormMapper.selectList(orderFormQueryWrapper).get(0);
             order.setOrderStatus(1);
+            order.setCashDepositType(1);
             QueryWrapper<Config> configQueryWrapper = new QueryWrapper<>();
             configQueryWrapper.eq("code","orderTime");
             Integer orderTime = Integer.parseInt(configMapper.selectList(configQueryWrapper).get(0).getValue());

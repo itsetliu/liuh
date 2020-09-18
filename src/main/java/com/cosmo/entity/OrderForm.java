@@ -45,6 +45,10 @@ public class OrderForm {
 
     private Long orderCouponId;
 
+    private Integer cashDepositType;
+
+    private BigDecimal cashDepositPrice;
+
     @TableField(exist = false)
     private List<OrderAddress> orderAddressList;
 

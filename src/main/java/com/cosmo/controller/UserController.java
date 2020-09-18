@@ -882,4 +882,48 @@ public class UserController {
         else if (i>0) return new CommonResult(200,"申请成功");
         else return new CommonResult(200,"申请失败");
     }
+
+    /**
+     * 分页查询待提现金额提现申请
+     * @param request
+     * @return
+     */
+    @GetMapping("/user/userWithdrawPriceApplyLitsPage")
+    public CommonResult userWithdrawPriceApplyLitsPage(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum = "1";
+        String status = request.getParameter("status");
+        if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空",null);
+        String name = request.getParameter("name");
+        String phone = request.getParameter("phone");
+        String bankName = request.getParameter("bankName");
+        String bankNumder = request.getParameter("bankNumder");
+        String cardholder = request.getParameter("cardholder");
+        Map<String,String> map = new HashedMap();
+        map.put("status",status);map.put("pageNum",pageNum);map.put("name",name);
+        map.put("phone",phone);map.put("bankName",bankName);
+        map.put("bankNumder",bankNumder);map.put("cardholder",cardholder);
+        PageInfo pageInfo = userService.userWithdrawPriceApplyLitsPage(map);
+        if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
+        else return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 修改带提现金额申请状态
+     * @param request
+     * @return
+     */
+    @PostMapping("/user/userWithdrawPriceApplyStatus")
+    public CommonResult userWithdrawPriceApplyStatus(HttpServletRequest request){
+        String userWithdrawPriceApplyId = request.getParameter("userWithdrawPriceApplyId");
+        if (StringUtil.isEmpty(userWithdrawPriceApplyId)) return new CommonResult(500,"userWithdrawPriceApplyId 为空",null);
+        String status = request.getParameter("status");
+        if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空",null);
+        Map<String,String> map = new HashedMap();
+        map.put("userWithdrawPriceApplyId",userWithdrawPriceApplyId);
+        map.put("status",status);
+        Integer i = userService.userWithdrawPriceApplyStatus(map);
+        if (i>0) return new CommonResult(200,"修改成功");
+        else return new CommonResult(201,"修改失败");
+    }
 }

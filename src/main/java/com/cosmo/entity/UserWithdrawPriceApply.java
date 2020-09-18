@@ -2,6 +2,9 @@ package com.cosmo.entity;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 /**
  * @author ZhaoZiQu
  * @version 2020/9/16
@@ -16,4 +19,6 @@ public class UserWithdrawPriceApply {
     private String bankNumber;
     private String cardholder;
     private Integer status;
+    private Date time;
+    private BigDecimal withdrawPrice;
 }

@@ -109,10 +109,10 @@ public class OrderService {
         dataMap.put("orderPrice",orderAddress.getOrderAddressPrice().add(orderAddress.getOrderAddressFreight()).toString());
         dataMap.put("orderModelList",orderForm.getOrderModelList());
         //TODO 本地  服务器
-//        String htmlStr = PDFUtil.freemarkerRender(dataMap, pdfExportConfig.getEmployeeKpiFtl());//本地
-        String htmlStr = PDFUtil.freemarkerRender1(dataMap, pdfExportConfig.getEmployeeKpiFtlName(), pdfExportConfig.getEmployeeKpiFtlUrl());//服务器
-//        byte[] pdfBytes = PDFUtil.createPDF(htmlStr, pdfExportConfig.getFontSimsun());
-        byte[] pdfBytes = PDFUtil.createPDF1(htmlStr, pdfExportConfig.getFontSimsunUrl());
+        String htmlStr = PDFUtil.freemarkerRender(dataMap, pdfExportConfig.getEmployeeKpiFtl());//本地
+//        String htmlStr = PDFUtil.freemarkerRender1(dataMap, pdfExportConfig.getEmployeeKpiFtlName(), pdfExportConfig.getEmployeeKpiFtlUrl());//服务器
+        byte[] pdfBytes = PDFUtil.createPDF(htmlStr, pdfExportConfig.getFontSimsun());
+//        byte[] pdfBytes = PDFUtil.createPDF1(htmlStr, pdfExportConfig.getFontSimsunUrl());
         if (pdfBytes != null && pdfBytes.length > 0) {
             String fileName = System.currentTimeMillis() + (int) (Math.random() * 90000 + 10000) + ".pdf";
             headers.setContentDispositionFormData("attachment", fileName);
@@ -262,6 +262,7 @@ public class OrderService {
         orderForm.setOrderRemark(map.get("orderRemark"));
         orderForm.setOrderStatus(0);
         orderForm.setOrderTimeCreate(new Date());
+        orderForm.setCashDepositType(0);
         i = orderFormMapper.insert(orderForm);
         if (i==0) return i;
         Integer day = 14;
@@ -498,6 +499,7 @@ public class OrderService {
         orderForm.setOrderRemark(map.get("orderRemark"));
         orderForm.setOrderStatus(0);
         orderForm.setOrderTimeCreate(new Date());
+        orderForm.setCashDepositType(0);
         Integer day = 14;
         orderForm.setOrderTimeDelivery(this.getNextsDay(new Date(),day));
         Integer i = 0;
@@ -1088,6 +1090,19 @@ public class OrderService {
                 userInfo.setWithdrawPrice(userInfo.getWithdrawPrice().add(orderParent.getOrderPriceSon()));
                 orderParent.setStatus(1);
                 this.orderParentMapper.updateById(orderParent);
+                this.userInfoMapper.updateById(userInfo);
+            }
+            //判断该订单是否支付保证金且返回保证金到用户余额
+            if(orderForm.getCashDepositType()==1){
+                orderForm.setCashDepositType(2);
+                UserPriceInfo userPriceInfo = new UserPriceInfo();
+                userPriceInfo.setType("+");
+                userPriceInfo.setPrice(orderForm.getCashDepositPrice());
+                userPriceInfo.setUserId(orderForm.getUserId());
+                userPriceInfo.setInfo("订单完成保证金返还");
+                this.userPriceInfoMapper.insert(userPriceInfo);
+                UserInfo userInfo = userInfoMapper.selectById(orderForm.getUserId());
+                userInfo.setPrice(userInfo.getPrice().add(orderForm.getCashDepositPrice()));
                 this.userInfoMapper.updateById(userInfo);
             }
         }
