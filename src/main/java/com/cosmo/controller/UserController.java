@@ -265,7 +265,7 @@ public class UserController {
 //        if (StringUtil.isEmpty(company)) return new CommonResult(500,"company 为空");
         String address = request.getParameter("address");
         if (StringUtil.isEmpty(address)) return new CommonResult(500,"address 为空");
-        if (userService.addressExist(address))return new CommonResult(500,"该地区暂未开放");
+//        if (!userService.addressExist(address))return new CommonResult(500,"该地区暂未开放");
         String detailAddress = request.getParameter("detailAddress");
         if (StringUtil.isEmpty(detailAddress)) return new CommonResult(500,"detailAddress 为空");
         String openBankNum = request.getParameter("openBankNum");
@@ -317,7 +317,7 @@ public class UserController {
 //        if (StringUtil.isEmpty(company)) return new CommonResult(500,"company 为空");
         String address = request.getParameter("address");
         if (StringUtil.isEmpty(address)) return new CommonResult(500,"address 为空");
-        if (userService.addressExist(address))return new CommonResult(500,"该地区暂未开放");
+//        if (!userService.addressExist(address))return new CommonResult(500,"该地区暂未开放");
         String detailAddress = request.getParameter("detailAddress");
         if (StringUtil.isEmpty(detailAddress)) return new CommonResult(500,"detailAddress 为空");
         String openBankNum = request.getParameter("openBankNum");
