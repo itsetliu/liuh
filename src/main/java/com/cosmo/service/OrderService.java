@@ -1219,4 +1219,51 @@ public class OrderService {
         i = orderFormMapper.updateById(orderForm);
         return i;
     }
+
+    /**
+     * 分页查询下线订单
+     * @param map
+     * @return
+     */
+    public PageInfo orderParentListPage(Map<String,String> map){
+        QueryWrapper<OrderParent> orderParentQueryWrapper = new QueryWrapper<>();
+        orderParentQueryWrapper.eq("user_id",map.get("userId")).eq("status",map.get("status"));
+        Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
+        IPage<Map<String,Object>> orderParenMapList = orderParentMapper.selectMapsPage(page,orderParentQueryWrapper);
+        for (Map<String,Object> orderParenMap:orderParenMapList.getRecords()){
+            OrderForm orderForm = orderFormMapper.selectById((Long)orderParenMap.get("order_id"));
+            orderParenMap.put("order_number",orderForm.getOrderNumber());
+            Date order_time_create = (Date) orderParenMap.get("order_time_create");
+            orderParenMap.put("order_time_create",sdf.format(order_time_create));
+        }
+        PageInfo pageInfo = new PageInfo(orderParenMapList);
+        return pageInfo;
+    }
+
+    /**
+     * 通过用户id查询下线订单收益
+     * @param userId
+     * @return
+     */
+    public Map<String,Object> orderParentEarnings(String userId){
+        QueryWrapper<OrderParent> orderParentQueryWrapper0 = new QueryWrapper<>();
+        orderParentQueryWrapper0.eq("user_id",userId).eq("status",0);
+        List<OrderParent> orderParentList0 = orderParentMapper.selectList(orderParentQueryWrapper0);
+        BigDecimal earnings0 = new BigDecimal("0.00");
+        for (OrderParent orderParent:orderParentList0){
+            BigDecimal earnings = orderParent.getOrderPriceSon().subtract(orderParent.getOrderPrice());
+            earnings0 = earnings0.add(earnings);
+        }
+        QueryWrapper<OrderParent> orderParentQueryWrapper1 = new QueryWrapper<>();
+        orderParentQueryWrapper1.eq("user_id",userId).eq("status",1);
+        List<OrderParent> orderParentList1 = orderParentMapper.selectList(orderParentQueryWrapper1);
+        BigDecimal earnings1 = new BigDecimal("0.00");
+        for (OrderParent orderParent:orderParentList1){
+            BigDecimal earnings = orderParent.getOrderPriceSon().subtract(orderParent.getOrderPrice());
+            earnings1 = earnings1.add(earnings);
+        }
+        Map<String,Object> map = new HashMap<>();
+        map.put("ongoing",earnings0);map.put("complete",earnings1);
+        return map;
+    }
 }

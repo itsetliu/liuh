@@ -564,4 +564,37 @@ public class OrderController {
         return new CommonResult(201,"修改失败");
     }
 
+    /**
+     * 分页查询下线订单
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/order/orderParentListPage")
+    public CommonResult orderParentListPage(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum = "1";
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        String status = request.getParameter("status");
+        if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
+        Map<String,String> map = new HashMap<>();
+        map.put("pageNum",pageNum);map.put("userId",userId);map.put("status",status);
+        PageInfo pageInfo = orderService.orderParentListPage(map);
+        if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
+        else return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 通过用户id查询下线订单收益
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/orderParentEarnings")
+    public CommonResult orderParentEarnings(HttpServletRequest request){
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        Map<String,Object> map = orderService.orderParentEarnings(userId);
+        return new CommonResult(200,"查询成功",map);
+    }
+
 }
