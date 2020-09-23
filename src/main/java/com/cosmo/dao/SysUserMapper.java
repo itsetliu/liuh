@@ -28,14 +28,14 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
      * @param userId
      * @return
      */
-    List<SysRole> roleList(long userId);
+    List<SysRole> roleList(String userId);
 
     /**
      * 通过用户id查询权限
      * @param userId
      * @return
      */
-    List<Menu> menuList(long userId);
+    List<Menu> menuList(String userId);
 
     /**
      * 通过用户账号更新用户登录信息

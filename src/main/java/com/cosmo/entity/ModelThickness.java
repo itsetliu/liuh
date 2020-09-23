@@ -10,9 +10,9 @@ import java.math.BigDecimal;
  */
 @Data
 public class ModelThickness {
-    private Long id;
+    private String id;
 
-    private Long modelId;
+    private String modelId;
 
     private String thickness;
 

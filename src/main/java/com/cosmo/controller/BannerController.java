@@ -49,7 +49,7 @@ public class BannerController {
     public CommonResult delBanner(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        if (bannerService.delBanner(Integer.parseInt(id))>0) return new CommonResult(200,"删除成功");
+        if (bannerService.delBanner(id)>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
 

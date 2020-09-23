@@ -8,11 +8,11 @@ import lombok.Data;
  */
 @Data
 public class SysRoleMenu {
-    private Long id;
+    private String id;
 
-    private Long roleId;
+    private String roleId;
 
-    private Long menuId;
+    private String menuId;
 
 
 }

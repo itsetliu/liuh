@@ -10,20 +10,20 @@ public interface SysMenuMapper extends BaseMapper<SysMenu> {
      * 根据pid查询权限及子下权限
      * @return
      */
-    List<SysMenu> sysMenuList(Long pid);
+    List<SysMenu> sysMenuList(String pid);
 
     /**
      * 根据身份id查询权限及子下权限
      * @return
      */
-    List<SysMenu> sysRoleMenuList(Long roleId);
+    List<SysMenu> sysRoleMenuList(String roleId);
 
     /**
      * 根据身份id查询子下权限
      * @param roleId
      * @return
      */
-    List<SysMenu> sysMenuListRoleSon(Long roleId);
+    List<SysMenu> sysMenuListRoleSon(String roleId);
 
     /**
      * 查询子下权限

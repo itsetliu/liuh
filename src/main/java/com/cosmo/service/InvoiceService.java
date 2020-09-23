@@ -32,7 +32,7 @@ public class InvoiceService {
      * @param userId
      * @return
      */
-    public List<OrderForm> orderList(Integer userId){
+    public List<OrderForm> orderList(String userId){
         QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
         orderFormQueryWrapper.eq("user_id",userId).eq("invoice_type",0);
         List<Integer> in = new ArrayList<Integer>();
@@ -49,7 +49,7 @@ public class InvoiceService {
     @Transactional(value="txManager1")
     public Integer addInvoice(Map<String,String> map){
         Invoice invoice = new Invoice();
-        invoice.setUserId(Long.valueOf(map.get("userId")));
+        invoice.setUserId(map.get("userId"));
         invoice.setName(map.get("name"));
         invoice.setPhone(map.get("phone"));
         invoice.setTax(map.get("tax"));

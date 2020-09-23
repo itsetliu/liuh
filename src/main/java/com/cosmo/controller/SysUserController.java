@@ -110,7 +110,7 @@ public class SysUserController {
      */
     @PostMapping(value = "/sys/menus",produces = "application/json;charset=UTF-8")
     public CommonResult sysMenus(){
-        List<SysMenu> sysMenuList = sysUserService.sysMenus(0l);
+        List<SysMenu> sysMenuList = sysUserService.sysMenus("0");
         if (sysMenuList.size()>0) return new CommonResult(200,"查询成功",sysMenuList);
         return new CommonResult(500,"查询失败",null);
     }
@@ -124,7 +124,7 @@ public class SysUserController {
     public CommonResult sysMenuList(HttpServletRequest request){
         String pid = request.getParameter("pid");
         if (StringUtil.isEmpty(pid)) return new CommonResult(500,"pid 为空",null);
-        List<SysMenu> sysMenuList = sysUserService.sysMenuList(Integer.parseInt(pid));
+        List<SysMenu> sysMenuList = sysUserService.sysMenuList(pid);
         if (sysMenuList.size()>0) return new CommonResult(200,"查询成功",sysMenuList);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -141,7 +141,7 @@ public class SysUserController {
         String status = request.getParameter("status");
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空",null);
         SysMenu sysMenu = new SysMenu();
-        sysMenu.setId(Long.valueOf(id));
+        sysMenu.setId(id);
         sysMenu.setStatus(Integer.parseInt(status));
         int updateSysMenu = sysUserService.updateSysMenu(sysMenu);
         if (updateSysMenu>0) return new CommonResult(200,"更变成功");
@@ -157,7 +157,7 @@ public class SysUserController {
     public CommonResult sysRoleById(HttpServletRequest request){
         String roleId = request.getParameter("roleId");
         if (StringUtil.isEmpty(roleId)) return new CommonResult(500,"roleId 为空",null);
-        SysRole sysRole = sysUserService.sysRoleById(Long.valueOf(roleId));
+        SysRole sysRole = sysUserService.sysRoleById(roleId);
         if (sysRole!=null) return new CommonResult(200,"查询成功",sysRole);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -182,7 +182,7 @@ public class SysUserController {
     public CommonResult sysMenuListSon(HttpServletRequest request){
         String roleId = request.getParameter("roleId");
         if (StringUtil.isEmpty(roleId)) return new CommonResult(500,"roleId 为空",null);
-        Map<String, Object> map = sysUserService.sysMenuListSon(Long.valueOf(roleId));
+        Map<String, Object> map = sysUserService.sysMenuListSon(roleId);
         if (map!=null) return new CommonResult(200,"查询成功",map);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -252,7 +252,7 @@ public class SysUserController {
     public CommonResult delRoleById(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        int i = sysUserService.delRoleById(Integer.parseInt(id));
+        int i = sysUserService.delRoleById(id);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -276,7 +276,7 @@ public class SysUserController {
     public CommonResult SysRoleList1(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        List<SysRole> roles = sysUserService.roleList(Integer.parseInt(id));
+        List<SysRole> roles = sysUserService.roleList(id);
         if (roles.size()>0) return new CommonResult(200,"查询成功",roles);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -330,7 +330,7 @@ public class SysUserController {
     public CommonResult updateSysUsers(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        SysUser sysUser = sysUserService.userById(Integer.parseInt(id));
+        SysUser sysUser = sysUserService.userById(id);
         String nickName = request.getParameter("nickName");
         if (StringUtil.isEmpty(nickName)) return new CommonResult(500,"nickName 为空");
         String phone = request.getParameter("phone");
@@ -382,7 +382,7 @@ public class SysUserController {
     @PostMapping("/sys/delUserById")
     public CommonResult delUserById(HttpServletRequest request){
         String id = request.getParameter("id");
-        int i = sysUserService.delUserById(Integer.parseInt(id));
+        int i = sysUserService.delUserById(id);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }

@@ -11,9 +11,9 @@ import java.util.List;
  */
 @Data
 public class Invoice {
-    private Long id;
+    private String id;
 
-    private Long userId;
+    private String userId;
 
     private String name;
 

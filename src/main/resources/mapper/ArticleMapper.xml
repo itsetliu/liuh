@@ -45,15 +45,15 @@
       <if test="classifyId != null" >#{article.classifyId},</if>
     </trim>
 </insert>
-<select id="selectArticle" resultMap="BaseResultMap" parameterType="java.lang.Long">
+<select id="selectArticle" resultMap="BaseResultMap" parameterType="java.lang.String">
     select id, user_id, browse_number, praise_number, time, type, title, info_array, img_array, video, classify_id
     from article where id = #{articleId}
 </select>
-<select id="selectArticleMap" resultType="java.util.Map" parameterType="java.lang.Long">
+<select id="selectArticleMap" resultType="java.util.Map" parameterType="java.lang.String">
     select id, user_id, browse_number, praise_number, time, type, title, info_array, img_array, video, classify_id
     from article where id = #{articleId}
 </select>
-<delete id="delArticle" parameterType="java.lang.Long">
+<delete id="delArticle" parameterType="java.lang.String">
     delete from article where id = #{articleId}
 </delete>
 <select id="articleList" resultType="java.util.Map" parameterType="com.cosmo.entity.Article">
@@ -61,7 +61,7 @@
            a.type, a.title, a.info_array, a.img_array, a.video, a.classify_id, ac.name classify_name
     from article a left join article_classify ac on a.classify_id=ac.id left join user_info ui on a.user_id=ui.id
     where 1=1 <if test="article.classifyId != null" >and a.classify_id = #{article.classifyId}</if>
-    <if test="article.userId != null" >and a.user_id = #{userId}</if>
+    <if test="article.userId != null" >and a.user_id = #{article.userId}</if>
     <if test="article.title != null" ><if test="article.title != '%%'" >and a.title like #{article.title}</if></if>
     order by a.id desc
 </select>

@@ -10,9 +10,9 @@ import java.math.BigDecimal;
  */
 @Data
 public class UserLock {
-    private Long id;
+    private String id;
 
-    private Long userId;
+    private String userId;
 
     private String number;
 

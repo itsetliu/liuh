@@ -8,9 +8,9 @@ import lombok.Data;
  */
 @Data
 public class ModelShow {
-    private Long id;
+    private String id;
 
-    private Long modelId;
+    private String modelId;
 
     private String name;
 

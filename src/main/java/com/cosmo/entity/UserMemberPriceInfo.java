@@ -11,9 +11,9 @@ import java.util.Date;
  */
 @Data
 public class UserMemberPriceInfo {
-    private Long id;
+    private String id;
 
-    private Long userId;
+    private String userId;
 
     private Integer type;
 

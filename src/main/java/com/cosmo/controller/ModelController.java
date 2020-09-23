@@ -1,6 +1,7 @@
 package com.cosmo.controller;
 
 import com.cosmo.entity.Model;
+import com.cosmo.entity.ModelCarton;
 import com.cosmo.entity.ModelShow;
 import com.cosmo.service.ModelService;
 import com.cosmo.util.CommonResult;
@@ -89,7 +90,7 @@ public class ModelController {
     public CommonResult updateInfo(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        Map<String,Object> map = modelService.updateInfo(Integer.parseInt(id));
+        Map<String,Object> map = modelService.updateInfo(id);
         if (map!=null) return new CommonResult(200,"查询成功",map);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -133,7 +134,7 @@ public class ModelController {
     public CommonResult delModel(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        Integer i = modelService.delModel(Long.valueOf(id));
+        Integer i = modelService.delModel(id);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -173,7 +174,7 @@ public class ModelController {
     public CommonResult byId(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        Map<String,Object> map = modelService.byId(Integer.parseInt(id));
+        Map<String,Object> map = modelService.byId(id);
         if (map!=null) return new CommonResult(200,"查询成功",map);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -206,7 +207,7 @@ public class ModelController {
         String volume = request.getParameter("volume");
         if (StringUtil.isEmpty(volume)) return new CommonResult(500,"volume 为空");
         ModelShow modelShow = new ModelShow();
-        modelShow.setModelId(Long.valueOf(modelId));
+        modelShow.setModelId(modelId);
         Double suttle1 = Double.parseDouble(suttle);
         if (suttle1<10) suttle1=suttle1*10;
         String name = typeName+thickness+suttle1.intValue();
@@ -235,7 +236,7 @@ public class ModelController {
         ModelShow modelShow = new ModelShow();
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        modelShow.setId(Long.valueOf(id));
+        modelShow.setId(id);
         String scope = request.getParameter("scope");
         if (!StringUtil.isEmpty(scope)) modelShow.setScope(scope);
         String volume = request.getParameter("volume");
@@ -254,7 +255,7 @@ public class ModelController {
     public CommonResult delModelShow(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        int i = modelService.delModelShow(Integer.parseInt(id));
+        int i = modelService.delModelShow(id);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -301,8 +302,8 @@ public class ModelController {
         if (StringUtil.isEmpty(lockPrice)) return new CommonResult(500,"lockPrice 为空");
         Map<String,String> map = new HashMap<>();
         map.put("userId",userId);map.put("lockPrice",lockPrice);
-        Integer i = modelService.lockPrice(map);
-        if (i==201) return new CommonResult(201,"userId错误/不存在",null);
+        String i = modelService.lockPrice(map);
+        if ("201".equals(i)) return new CommonResult(201,"userId错误/不存在",null);
         else if (i!=null) return new CommonResult(200,"新增成功，锁价数据id为",i);
         else return new CommonResult(201,"新增失败",null);
     }
@@ -321,7 +322,7 @@ public class ModelController {
         String status = request.getParameter("status");
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
         if (!("0".equals(status)||"1".equals(status)||"2".equals(status)||"3".equals(status)||"4".equals(status))) return new CommonResult(500,"status 格式不正确");
-        PageInfo pageInfo = modelService.userLockListPage(Integer.parseInt(pageNum),Integer.parseInt(userId),Integer.parseInt(status));
+        PageInfo pageInfo = modelService.userLockListPage(Integer.parseInt(pageNum),userId,Integer.parseInt(status));
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -341,4 +342,73 @@ public class ModelController {
         if (i>0) return new CommonResult(200,"成功");
         return new CommonResult(201,"失败");
     }
+
+    /**
+     * 通过每箱卷数查询纸箱单价
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/model/selectModelCartonPipeNumber")
+    public CommonResult selectModelCartonPipeNumber(HttpServletRequest request){
+        List<ModelCarton> modelCartonList = modelService.selectModelCarton();
+        if (modelCartonList.size()>0) return new CommonResult(200,"查询成功",modelCartonList);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 分页查询纸箱单价
+     * @return
+     */
+    @GetMapping("/model/selectModelCartonPipeNumberPage")
+    public CommonResult selectModelCartonPipeNumberPage(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum="1";
+        String length = request.getParameter("length");
+        String width = request.getParameter("width");
+        String height = request.getParameter("height");
+        Map<String,String> map = new HashMap<>();
+        map.put("pageNum",pageNum);map.put("length",length);
+        map.put("width",width);map.put("height",height);
+        PageInfo modelCartonList = modelService.selectModelCartonPage(map);
+        if (modelCartonList.getList().size()>0) return new CommonResult(200,"查询成功",modelCartonList);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 新增纸箱规格
+     * @param request
+     * @return
+     */
+    @PostMapping("/model/addModelCarton")
+    public CommonResult addModelCarton(HttpServletRequest request){
+        String length = request.getParameter("length");
+        if (StringUtil.isEmpty(length)) return new CommonResult(500,"length 为空");
+        String width = request.getParameter("width");
+        if (StringUtil.isEmpty(width)) return new CommonResult(500,"width 为空");
+        String height = request.getParameter("height");
+        if (StringUtil.isEmpty(height)) return new CommonResult(500,"height 为空");
+        String cartonPrice = request.getParameter("cartonPrice");
+        if (StringUtil.isEmpty(cartonPrice)) return new CommonResult(500,"cartonPrice 为空");
+        Map<String,String> map = new HashMap<>();
+        map.put("length",length);map.put("width",width);
+        map.put("height",height);map.put("cartonPrice",cartonPrice);
+        Integer i = modelService.addModelCarton(map);
+        if (i>0) return new CommonResult(200,"新增成功");
+        return new CommonResult(201,"新增失败");
+    }
+
+    /**
+     * 根据id删除纸箱规格
+     * @param request
+     * @return
+     */
+    @PostMapping("/model/delModelCarton")
+    public CommonResult delModelCarton(HttpServletRequest request){
+        String modelCartonId = request.getParameter("modelCartonId");
+        if (StringUtil.isEmpty(modelCartonId)) return new CommonResult(500,"modelCartonId 为空");
+        Integer i = modelService.delModelCarton(modelCartonId);
+        if (i>0) return new CommonResult(200,"删除成功");
+        return new CommonResult(201,"删除失败");
+    }
+
 }

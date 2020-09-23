@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +79,7 @@ public class OrderService {
      *
      * @return
      */
-    public ResponseEntity<?> export(Integer orderId) {
+    public ResponseEntity<?> export(String orderId) {
         OrderForm orderForm = this.orderFormMapper.selectById(orderId);
         QueryWrapper<OrderModel> orderModelQueryWrapper = new QueryWrapper<>();
         orderModelQueryWrapper.eq("order_id",orderId).eq("order_model_status",1);
@@ -109,10 +110,10 @@ public class OrderService {
         dataMap.put("orderPrice",orderAddress.getOrderAddressPrice().add(orderAddress.getOrderAddressFreight()).toString());
         dataMap.put("orderModelList",orderForm.getOrderModelList());
         //TODO 本地  服务器
-        String htmlStr = PDFUtil.freemarkerRender(dataMap, pdfExportConfig.getEmployeeKpiFtl());//本地
-//        String htmlStr = PDFUtil.freemarkerRender1(dataMap, pdfExportConfig.getEmployeeKpiFtlName(), pdfExportConfig.getEmployeeKpiFtlUrl());//服务器
-        byte[] pdfBytes = PDFUtil.createPDF(htmlStr, pdfExportConfig.getFontSimsun());
-//        byte[] pdfBytes = PDFUtil.createPDF1(htmlStr, pdfExportConfig.getFontSimsunUrl());
+//        String htmlStr = PDFUtil.freemarkerRender(dataMap, pdfExportConfig.getEmployeeKpiFtl());//本地
+        String htmlStr = PDFUtil.freemarkerRender1(dataMap, pdfExportConfig.getEmployeeKpiFtlName(), pdfExportConfig.getEmployeeKpiFtlUrl());//服务器
+//        byte[] pdfBytes = PDFUtil.createPDF(htmlStr, pdfExportConfig.getFontSimsun());
+        byte[] pdfBytes = PDFUtil.createPDF1(htmlStr, pdfExportConfig.getFontSimsunUrl());
         if (pdfBytes != null && pdfBytes.length > 0) {
             String fileName = System.currentTimeMillis() + (int) (Math.random() * 90000 + 10000) + ".pdf";
             headers.setContentDispositionFormData("attachment", fileName);
@@ -162,7 +163,7 @@ public class OrderService {
         BigDecimal trayWeigth = new BigDecimal(this.getConfigValue("trayWeigth"));
         Integer shopTrolleyTime = Integer.parseInt(this.getConfigValue("shopTrolleyTime"));
         OrderModel orderModel = new OrderModel();
-        orderModel.setUserId(Long.valueOf(map.get("userId")));
+        orderModel.setUserId(map.get("userId"));
         orderModel.setModelType(Integer.parseInt(map.get("modelType")));
         orderModel.setModelName(map.get("modelName"));
         orderModel.setSpecWidth(map.get("specWidth"));
@@ -176,6 +177,7 @@ public class OrderService {
         if (Integer.parseInt(map.get("cartonType"))==1)orderModel.setCartonInfo(FileUtil.upload(FileUtil.base64ToMultipart(map.get("cartonInfo"))));
         orderModel.setCartonPipeNumber(Integer.parseInt(map.get("cartonPipeNumber")));
         orderModel.setCartonNumber(Integer.parseInt(map.get("cartonNumber")));
+        orderModel.setCartonPrice(new BigDecimal(map.get("cartonPrice")));
         orderModel.setLabelType(Integer.parseInt(map.get("labelType")));
         if (Integer.parseInt(map.get("labelType"))==1)orderModel.setLabelInfo(FileUtil.upload(FileUtil.base64ToMultipart(map.get("labelInfo"))));
         orderModel.setTrayType(Integer.parseInt(map.get("trayType")));
@@ -195,9 +197,9 @@ public class OrderService {
         orderModel.setModelProcessCost(new BigDecimal(map.get("modelProcessCost")));
         orderModel.setModelRawPrice(new BigDecimal(map.get("modelRawPrice")));
         orderModel.setModelRawPriceType(Integer.parseInt(map.get("modelRawPriceType")));
-        orderModel.setMemberId(Long.valueOf(map.get("memberId")));
+        orderModel.setMemberId(map.get("memberId"));
         orderModel.setMemberDiscount(new BigDecimal(map.get("memberDiscount")));
-        if ("2".equals(map.get("modelRawPriceType"))) orderModel.setUserLockId(Long.valueOf(map.get("userLockId")));
+        if ("2".equals(map.get("modelRawPriceType"))) orderModel.setUserLockId(map.get("userLockId"));
         orderModel.setOrderModelStatus(0);
         Date nowDate = new Date();
         nowDate.setTime(nowDate.getTime()+shopTrolleyTime);
@@ -214,7 +216,7 @@ public class OrderService {
      * @param orderModelId
      * @return
      */
-    public Integer delOrderModel(Integer orderModelId){
+    public Integer delOrderModel(String orderModelId){
         OrderModel orderModel = orderModelMapper.selectById(orderModelId);
         if (orderModel.getLabelType()==1)FileUtil.delFile(orderModel.getLabelInfo());
         if (orderModel.getCartonType()==1)FileUtil.delFile(orderModel.getCartonInfo());
@@ -242,7 +244,7 @@ public class OrderService {
      */
     @Transactional(value="txManager1")
     public Integer createOrderForm(Map<String,String> map){
-        UserInfo userInfo = userInfoMapper.selectById(Long.valueOf(map.get("userId")));
+        UserInfo userInfo = userInfoMapper.selectById(map.get("userId"));
         Integer i = 0;
 
         //初步新建合同订单获取orderFormId
@@ -298,7 +300,7 @@ public class OrderService {
             if (orderModels.getMemberId()!=userInfo.getMemberId()){
                 orderModels.setMemberId(userInfo.getMemberId());
                 //判断用户是否有会员
-                if (userInfo.getMemberId()==0){
+                if ("0".equals(userInfo.getMemberId())){
                     orderModels.setMemberDiscount(new BigDecimal(0));
                 }else {
                     Map<String,String> map1 = new HashMap<>();
@@ -368,7 +370,7 @@ public class OrderService {
             orderForm.setOrderWeight(orderAddress.getOrderAddressRoughWeight());
             orderForm.setOrderTotalTrayNumber(trayNumber[0]);
         }
-        if (userInfo.getMemberId()!=0){
+        if (!"0".equals(userInfo.getMemberId())){
             if (userInfo.getMemberPrice().compareTo(orderForm.getOrderPrice())==-1){
                 this.orderFormMapper.deleteById(orderForm.getId());
                 this.orderAddressMapper.deleteById(orderAddress.getId());
@@ -427,10 +429,10 @@ public class OrderService {
         BigDecimal[] orderAddressRoughWeight = {new BigDecimal(0)};
         BigDecimal[] modelTotalPrice = {new BigDecimal(0)};
         int[] trayNumber = {0};
-        Long userLockId = orderModelList.get(0).getUserLockId();
+        String userLockId = orderModelList.get(0).getUserLockId();
         boolean[] userLockIdSame = {false};
         orderModelList.forEach(orderModels -> {
-            if (userLockId!=orderModels.getUserLockId()) {
+            if (!userLockId.equals(orderModels.getUserLockId())) {
                 userLockIdSame[0] = true;
                 return;
             }
@@ -484,7 +486,7 @@ public class OrderService {
         }
         //初步新建合同订单获取orderFormId
         OrderForm orderForm = new OrderForm();
-        orderForm.setUserId(Long.valueOf(map.get("userId")));
+        orderForm.setUserId(map.get("userId"));
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
         String create = sdf1.format(new Date())+" 00:00:00";
@@ -596,8 +598,8 @@ public class OrderService {
         BigDecimal boxWeigth = new BigDecimal(this.getConfigValue("boxWeigth"));
         BigDecimal trayWeigth = new BigDecimal(this.getConfigValue("trayWeigth"));
         BigDecimal trayPrice = new BigDecimal(this.getConfigValue("trayPrice"));
-        UserInfo userInfo = userInfoMapper.selectById(Integer.parseInt(map.get("userId")));
-        OrderForm orderForm = orderFormMapper.selectById(Integer.parseInt(map.get("orderFormId")));
+        UserInfo userInfo = userInfoMapper.selectById(map.get("userId"));
+        OrderForm orderForm = orderFormMapper.selectById(map.get("orderFormId"));
         List<OrderModel> orderModelList1 = new ArrayList<>();//原先剩余的各型号数
         List<OrderModel> orderModelList2 = new ArrayList<>();//分配出来的各型号数
         Integer orderAddressTrayNumber1 = 0;
@@ -612,7 +614,7 @@ public class OrderService {
         for(int i=0;i<stringList.size();i++){
             Map<String,Object> stringMap = JSON.parseObject(stringList.get(i),Map.class);
             OrderModel orderModel1 = new OrderModel();
-            OrderModel orderModel2 = orderModelMapper.selectById((Integer) stringMap.get("orderModelId"));
+            OrderModel orderModel2 = orderModelMapper.selectById(stringMap.get("orderModelId").toString());
             BeanUtils.copyProperties(orderModel2, orderModel1);//把orderModel2的值赋值给orderModel1
             if (orderModel1.getRollNumber()<Integer.parseInt(stringMap.get("number").toString())) return 501;//有型号卷数不足
             orderModel1.setRollNumber(orderModel1.getRollNumber()-Integer.parseInt(stringMap.get("number").toString()));
@@ -709,11 +711,14 @@ public class OrderService {
         QueryWrapper<OrderModel> orderModelQueryWrapper = new QueryWrapper<>();
         orderModelQueryWrapper.eq("order_id",orderAddress1.getId());
         List<OrderModel> orderModelList3 = orderModelMapper.selectList(orderModelQueryWrapper);
-        boolean allNull[] = {false};
-        orderModelList3.forEach(orderModel3 -> {
-            if (orderModel3.getRollNumber()==0) allNull[0]=true;
-        });
-        if (allNull[0]){//判断订单下所有型号是否全部用完
+        boolean allNull = true;
+        for (OrderModel orderModel3:orderModelList3){
+            if (orderModel3.getRollNumber()!=0) {
+                allNull=false;
+                break;
+            }
+        }
+        if (allNull){//判断订单下所有型号是否全部用完
             QueryWrapper<OrderAddress> orderAddressQueryWrapper1 = new QueryWrapper<>();
             orderAddressQueryWrapper1.eq("order_id",orderForm.getId()).eq("order_address_type",1);
             List<OrderAddress> orderAddressList = orderAddressMapper.selectList(orderAddressQueryWrapper1);
@@ -762,7 +767,7 @@ public class OrderService {
      * @param orderStatus
      * @return
      */
-    public PageInfo orderFormPageList(Integer pageNum,Integer orderStatus,Integer userId){
+    public PageInfo orderFormPageList(Integer pageNum,Integer orderStatus,String userId){
         QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
         orderFormQueryWrapper.eq("order_status",orderStatus)
                 .eq("user_id",userId).orderByDesc("id");
@@ -783,7 +788,7 @@ public class OrderService {
      * @param orderStatus
      * @return
      */
-    public List<OrderForm> orderFormList(Integer orderStatus,Integer userId){
+    public List<OrderForm> orderFormList(Integer orderStatus,String userId){
         QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
         orderFormQueryWrapper.eq("order_status",orderStatus)
                 .eq("user_id",userId).orderByDesc("id");
@@ -802,7 +807,7 @@ public class OrderService {
      * @param orderFormId
      * @return
      */
-    public OrderForm orderFormInfo(Integer orderFormId){
+    public OrderForm orderFormInfo(String orderFormId){
         OrderForm orderForm = orderFormMapper.selectById(orderFormId);
         QueryWrapper<OrderAddress> orderAddressQueryWrapper = new QueryWrapper<>();
         orderAddressQueryWrapper.eq("order_id",orderForm.getId()).eq("order_address_type",0);
@@ -816,7 +821,7 @@ public class OrderService {
      * @param orderFormId
      * @return
      */
-    public Map<String,Object> orderFormInfo1(Integer orderFormId){
+    public Map<String,Object> orderFormInfo1(String orderFormId){
         OrderForm orderForm = orderFormMapper.selectById(orderFormId);
         QueryWrapper<OrderAddress> orderAddressQueryWrapper = new QueryWrapper<>();
         orderAddressQueryWrapper.eq("order_id",orderForm.getId()).eq("order_address_type",0);
@@ -839,7 +844,7 @@ public class OrderService {
      * @param orderAddressId
      * @return
      */
-    public OrderAddress orderAddressInfo(Integer orderAddressId){
+    public OrderAddress orderAddressInfo(String orderAddressId){
         OrderAddress orderAddress = orderAddressMapper.selectById(orderAddressId);
         QueryWrapper<OrderModel> orderModelQueryWrapper = new QueryWrapper<>();
         orderModelQueryWrapper.eq("order_id",orderAddressId).eq("order_model_status",2);
@@ -918,7 +923,7 @@ public class OrderService {
      * @param couponId
      * @return
      */
-    public Integer bindCoupon(Integer orderFormId,Long couponId){
+    public Integer bindCoupon(String orderFormId,String couponId){
         OrderForm orderForm = orderFormMapper.selectById(orderFormId);
         if (orderForm==null) return 1;
         if (orderForm.getOrderStatus()!=1) return 2;
@@ -952,7 +957,7 @@ public class OrderService {
      * @param orderId
      * @return
      */
-    public List<OrderModel> orderModelList(Integer orderId){
+    public List<OrderModel> orderModelList(String orderId){
         QueryWrapper<OrderAddress> orderAddressQueryWrapper = new QueryWrapper<>();
         orderAddressQueryWrapper.eq("order_id",orderId).eq("order_address_type",0);
         OrderAddress orderAddress = orderAddressMapper.selectList(orderAddressQueryWrapper).get(0);
@@ -972,7 +977,7 @@ public class OrderService {
      * @param orderModelStatus
      * @return
      */
-    public List<OrderModel> orderModelList1(Integer orderId,Integer orderModelStatus){
+    public List<OrderModel> orderModelList1(String orderId,Integer orderModelStatus){
         QueryWrapper<OrderModel> orderModelQueryWrapper = new QueryWrapper<>();
         orderModelQueryWrapper.eq("order_id",orderId).eq("order_model_status",orderModelStatus);
         return orderModelMapper.selectList(orderModelQueryWrapper);
@@ -984,7 +989,7 @@ public class OrderService {
      * @param orderId
      * @return
      */
-    public List<OrderAddress> orderAddressList(Integer orderId,Integer orderAddressType ){
+    public List<OrderAddress> orderAddressList(String orderId,Integer orderAddressType ){
         QueryWrapper<OrderAddress> orderAddressQueryWrapper = new QueryWrapper<>();
         orderAddressQueryWrapper.eq("order_id",orderId).eq("order_address_type",orderAddressType);
         return orderAddressMapper.selectList(orderAddressQueryWrapper);
@@ -996,7 +1001,7 @@ public class OrderService {
      * @return
      */
     public Integer updateOrderForm(Map<String,String> map){
-        Long orderFormId = Long.valueOf(map.get("orderFormId"));
+        String orderFormId = map.get("orderFormId");
         Integer orderStatus = Integer.parseInt(map.get("orderStatus"));
         OrderForm orderForm = orderFormMapper.selectById(orderFormId);
         //判断是否存在redis缓存，存在及删除
@@ -1140,7 +1145,7 @@ public class OrderService {
      */
     @Transactional(value="txManager1")
     public Integer updateOrderAddressPc(Map<String,String> map){
-        OrderAddress orderAddress = orderAddressMapper.selectById(Integer.parseInt(map.get("orderAddressId")));
+        OrderAddress orderAddress = orderAddressMapper.selectById(map.get("orderAddressId"));
         OrderForm orderForm = orderFormMapper.selectById(orderAddress.getOrderId());
         orderAddress.setCompanyName(map.get("companyName"));
         orderAddress.setUserName(map.get("userName"));
@@ -1229,12 +1234,10 @@ public class OrderService {
         QueryWrapper<OrderParent> orderParentQueryWrapper = new QueryWrapper<>();
         orderParentQueryWrapper.eq("user_id",map.get("userId")).eq("status",map.get("status"));
         Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
-        IPage<Map<String,Object>> orderParenMapList = orderParentMapper.selectMapsPage(page,orderParentQueryWrapper);
-        for (Map<String,Object> orderParenMap:orderParenMapList.getRecords()){
-            OrderForm orderForm = orderFormMapper.selectById((Long)orderParenMap.get("order_id"));
+        IPage<Map<String,String>> orderParenMapList = orderParentMapper.selectMapsPage(page,orderParentQueryWrapper);
+        for (Map<String,String> orderParenMap:orderParenMapList.getRecords()){
+            OrderForm orderForm = orderFormMapper.selectById(orderParenMap.get("order_id"));
             orderParenMap.put("order_number",orderForm.getOrderNumber());
-            Date order_time_create = (Date) orderParenMap.get("order_time_create");
-            orderParenMap.put("order_time_create",sdf.format(order_time_create));
         }
         PageInfo pageInfo = new PageInfo(orderParenMapList);
         return pageInfo;
@@ -1265,5 +1268,19 @@ public class OrderService {
         Map<String,Object> map = new HashMap<>();
         map.put("ongoing",earnings0);map.put("complete",earnings1);
         return map;
+    }
+
+    /**
+     * 通过合同订单id查询所有型号
+     * @param orderId
+     * @return
+     */
+    public OrderForm orderFormById(String orderId){
+        OrderForm orderForm = orderFormMapper.selectById(orderId);
+        if (orderForm==null) return null;
+        QueryWrapper<OrderModel> orderModelQueryWrapper = new QueryWrapper<>();
+        orderModelQueryWrapper.eq("order_model_status",1).eq("order_id",orderId);
+        orderForm.setOrderModelList(orderModelMapper.selectList(orderModelQueryWrapper));
+        return orderForm;
     }
 }

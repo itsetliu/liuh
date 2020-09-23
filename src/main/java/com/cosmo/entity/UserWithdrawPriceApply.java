@@ -11,8 +11,8 @@ import java.util.Date;
  */
 @Data
 public class UserWithdrawPriceApply {
-    private Long id;
-    private Long userId;
+    private String id;
+    private String userId;
     private String name;
     private String phone;
     private String bankName;

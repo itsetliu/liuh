@@ -16,9 +16,9 @@ import org.apache.ibatis.annotations.Param;
  */
 public interface ArticleMapper extends BaseMapper<Article> {
     int addArticle(Article article);
-    Article selectArticle(Long articleId);
-    Map<String,Object> selectArticleMap(Long articleId);
-    int delArticle(Long articleId);
+    Article selectArticle(String articleId);
+    Map<String,Object> selectArticleMap(String articleId);
+    int delArticle(String articleId);
     IPage<Map<String,Object>> articleList(Page<Map<String,Object>> page, Article article);
     int updateArticle(Article article);
     IPage<Map<String,Object>> commentList(Page<Map<String,Object>> page, Map<String,String> map);

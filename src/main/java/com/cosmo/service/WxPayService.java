@@ -256,7 +256,7 @@ public class WxPayService {
      * @throws Exception
      */
    @Transactional(value="txManager1")
-    public Map<String, String> wxPay(Integer userId, Integer orderId, Integer type) throws Exception {
+    public Map<String, String> wxPay(String userId, String orderId, Integer type) throws Exception {
         UserInfo userInfo = userInfoMapper.selectById(userId);
         OrderForm order = orderFormMapper.selectById(orderId);
         QueryWrapper<Config> configQueryWrapper = new QueryWrapper<>();
@@ -381,7 +381,7 @@ public class WxPayService {
      * @return
      * @throws Exception
      */
-    public Map<String, String> balance(Integer userId, String price) throws Exception {
+    public Map<String, String> balance(String userId, String price) throws Exception {
         UserInfo userInfo = userInfoMapper.selectById(userId);
         PaymentPo paymentPo = new PaymentPo();
         paymentPo.setBody("充值用户余额");
@@ -415,7 +415,7 @@ public class WxPayService {
      *       202:当前锁价数据id不是未支付保证金状态
      * @throws Exception
      */
-    public Map<String, String> payLockGuaranteeGold(Integer userLockId, Integer type) throws Exception {
+    public Map<String, String> payLockGuaranteeGold(String userLockId, Integer type) throws Exception {
         Map<String,String> map = new HashMap<>();
         UserLock userLock = userLockMapper.selectById(userLockId);
         if (userLock==null) { map.put("code","201"); return map; }
@@ -543,7 +543,7 @@ public class WxPayService {
                         Map<String,Object> userInfo = userInfoMapper.selectByOpenId(paymentPo.getOpenid());
                         UserPriceInfo userPriceInfo = new UserPriceInfo();
                         userPriceInfo.setInfo(paymentPo.getBody());
-                        userPriceInfo.setUserId(Long.valueOf(userInfo.get("id").toString()));
+                        userPriceInfo.setUserId(userInfo.get("id").toString());
                         userPriceInfo.setPrice(new BigDecimal(paymentPo.getTotal_fee()));
                         userPriceInfo.setType("-");
                         this.userPriceInfoMapper.insert(userPriceInfo);

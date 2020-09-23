@@ -51,7 +51,7 @@ public class UserController {
     public CommonResult delUserInfo(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空",null);
-        if (userService.delUserInfo(Integer.parseInt(id))>0) return new CommonResult(200,"删除成功");
+        if (userService.delUserInfo(id)>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
 
@@ -69,8 +69,8 @@ public class UserController {
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         UserRess userRess = new UserRess();
-        userRess.setId(Long.valueOf(id));
-        userRess.setUserId(Long.valueOf(userId));
+        userRess.setId(id);
+        userRess.setUserId(userId);
         if (userService.updateStatus(userRess)) return new CommonResult(200,"修改成功");
         return new CommonResult(500,"修改失败");
     }
@@ -109,7 +109,7 @@ public class UserController {
 //        if (StringUtil.isEmpty(company)) return new CommonResult(500,"company 为空");
         String fax = request.getParameter("fax");
 //        if (StringUtil.isEmpty(fax)) return new CommonResult(500,"fax 为空");
-        userRess.setUserId(Long.valueOf(userId));
+        userRess.setUserId(userId);
         userRess.setName(name);
         userRess.setPhone(phone);
         userRess.setPostcode(postcode);
@@ -157,8 +157,8 @@ public class UserController {
 //        if (StringUtil.isEmpty(company)) return new CommonResult(500,"company 为空");
         String fax = request.getParameter("fax");
 //        if (StringUtil.isEmpty(fax)) return new CommonResult(500,"fax 为空");
-        userRess.setId(Long.valueOf(id));
-        userRess.setUserId(Long.valueOf(userId));
+        userRess.setId(id);
+        userRess.setUserId(userId);
         userRess.setName(name);
         userRess.setPhone(phone);
         userRess.setPostcode(postcode);
@@ -178,7 +178,7 @@ public class UserController {
     public CommonResult delRess(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        if (userService.delRess(Integer.parseInt(id))) return new CommonResult(200,"删除成功");
+        if (userService.delRess(id)) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
 
@@ -191,7 +191,7 @@ public class UserController {
     public CommonResult userResses(HttpServletRequest request){
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        List<UserRess> userRessList = userService.userResses(Integer.parseInt(userId));
+        List<UserRess> userRessList = userService.userResses(userId);
         if (userRessList.size()>0) return new CommonResult(200,"查询成功",userRessList);
         return new CommonResult(201,"为查询到结果",null);
     }
@@ -207,7 +207,7 @@ public class UserController {
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         String type = request.getParameter("type");
         if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空");
-        List<UserRess> userRessList = userService.userRessList(Integer.parseInt(userId),Integer.parseInt(type));
+        List<UserRess> userRessList = userService.userRessList(userId,Integer.parseInt(type));
         if (userRessList.size()>0) return new CommonResult(200,"查询成功",userRessList);
         return new CommonResult(201,"为查询到结果",null);
     }
@@ -221,7 +221,7 @@ public class UserController {
     public CommonResult userInvoices(HttpServletRequest request){
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        List<UserInvoice> userInvoiceList = userService.userInvoices(Integer.parseInt(userId));
+        List<UserInvoice> userInvoiceList = userService.userInvoices(userId);
         if (userInvoiceList.size()>0) return new CommonResult(200,"查询成功",userInvoiceList);
         return new CommonResult(201,"为查询到结果",null);
     }
@@ -238,8 +238,8 @@ public class UserController {
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         UserInvoice userInvoice = new UserInvoice();
-        userInvoice.setId(Long.valueOf(id));
-        userInvoice.setUserId(Long.valueOf(userId));
+        userInvoice.setId(id);
+        userInvoice.setUserId(userId);
         if (userService.updateInvoiceStatus(userInvoice)) return new CommonResult(200,"修改成功");
         return new CommonResult(500,"修改失败");
     }
@@ -274,10 +274,10 @@ public class UserController {
         if (StringUtil.isEmpty(openBank)) return new CommonResult(500,"openBank 为空");
         String status = request.getParameter("status");
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
-        Integer countInvoice = userService.countInvoice(Integer.parseInt(userId));
+        Integer countInvoice = userService.countInvoice(userId);
         if (countInvoice>10) return new CommonResult(500,"开票信息超过10个");
         UserInvoice userInvoice = new UserInvoice();
-        userInvoice.setUserId(Long.valueOf(userId));
+        userInvoice.setUserId(userId);
         userInvoice.setName(name);
         userInvoice.setPhone(phone);
         userInvoice.setTax(tax);
@@ -327,8 +327,8 @@ public class UserController {
         String status = request.getParameter("status");
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
         UserInvoice userInvoice = new UserInvoice();
-        userInvoice.setId(Long.valueOf(id));
-        userInvoice.setUserId(Long.valueOf(userId));
+        userInvoice.setId(id);
+        userInvoice.setUserId(userId);
         userInvoice.setName(name);
         userInvoice.setPhone(phone);
         userInvoice.setTax(tax);
@@ -353,7 +353,7 @@ public class UserController {
     public CommonResult delInvoice(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        Integer i = userService.delInvoice(Integer.parseInt(id));
+        Integer i = userService.delInvoice(id);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -387,7 +387,7 @@ public class UserController {
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         String status = request.getParameter("status");
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
-        PageInfo pageInfo = userService.selectUserCoupon(Integer.parseInt(pageNum),Integer.parseInt(userId),Integer.parseInt(status));
+        PageInfo pageInfo = userService.selectUserCoupon(Integer.parseInt(pageNum),userId,Integer.parseInt(status));
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -477,7 +477,7 @@ public class UserController {
     public CommonResult userPrice(HttpServletRequest request){
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        return new CommonResult(200,"成功",userService.userPrice(Integer.parseInt(userId)));
+        return new CommonResult(200,"成功",userService.userPrice(userId));
     }
 
     /**
@@ -503,7 +503,7 @@ public class UserController {
         if (StringUtil.isEmpty(pageNum)) pageNum = "1";
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        PageInfo pageInfo = userService.userPriceList(Integer.parseInt(pageNum),Integer.parseInt(userId));
+        PageInfo pageInfo = userService.userPriceList(Integer.parseInt(pageNum),userId);
         if (pageInfo.getList().size()>0)return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
     }

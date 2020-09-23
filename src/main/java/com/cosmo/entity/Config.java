@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 public class Config {
-    private Long id;
+    private String id;
 
     private String code;
 

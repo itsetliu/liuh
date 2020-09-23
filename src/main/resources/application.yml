@@ -3,19 +3,19 @@ server:
   port: 8082
 
 # 打印sql
-logging:
-  level:
-    com.cosmo.dao : debug
+#logging:
+#  level:
+#    com.cosmo.dao : debug
 
 spring:
   mvc:
     dispatch-options-request: true
   datasource:
     username: root
-#    url: jdbc:mysql://122.51.51.223:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    url: jdbc:mysql://localhost:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-#    password: cosmosql2020hwm
-    password: root
+    url: jdbc:mysql://122.51.51.223:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+#    url: jdbc:mysql://localhost:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    password: cosmosql2020hwm
+#    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     druid:

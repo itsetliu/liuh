@@ -39,7 +39,7 @@ public class BannerService {
      * @param id
      * @return
      */
-    public int delBanner(Integer id){
+    public int delBanner(String id){
         Banner banner = bannerMapper.selectById(id);
         if (!FileUtil.delFile(banner.getImgUrl())) return 0;
         return bannerMapper.deleteById(id);

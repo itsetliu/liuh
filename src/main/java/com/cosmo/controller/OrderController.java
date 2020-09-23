@@ -29,7 +29,7 @@ public class OrderController {
         String orderId = request.getParameter("orderId");
         if (StringUtils.isEmpty(orderId)) return new ResponseEntity<String>("{ \"code\" : \"404\", \"message\" : \"not found\" }", null, HttpStatus.NOT_FOUND);
         try {
-            ResponseEntity<?> responseEntity = orderService.export(Integer.parseInt(orderId));
+            ResponseEntity<?> responseEntity = orderService.export(orderId);
             return responseEntity;
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,6 +81,8 @@ public class OrderController {
         if (StringUtil.isEmpty(cartonPipeNumber)) return new CommonResult(500,"cartonPipeNumber 为空");
         String cartonNumber = request.getParameter("cartonNumber");
         if (StringUtil.isEmpty(cartonNumber)) return new CommonResult(500,"cartonNumber 为空");
+        String cartonPrice = request.getParameter("cartonPrice");
+        if (StringUtil.isEmpty(cartonPrice)) return new CommonResult(500,"cartonPrice 为空");
         String labelType = request.getParameter("labelType");
         if (StringUtil.isEmpty(labelType)) return new CommonResult(500,"labelType 为空");
         if ("1".equals(labelType)){
@@ -120,8 +122,8 @@ public class OrderController {
         map.put("userId",userId);map.put("modelType",modelType);map.put("modelName",modelName);
         map.put("specWidth",specWidth);map.put("specThickness",specThickness);map.put("specLength",specLength);
         map.put("specSuttle",specSuttle);map.put("pipeWeight",pipeWeight);map.put("pipeDia",pipeDia);
-        map.put("cartonWeight",cartonWeight);map.put("cartonType",cartonType);
-        map.put("cartonPipeNumber",cartonPipeNumber);map.put("cartonNumber",cartonNumber);map.put("labelType",labelType);
+        map.put("cartonWeight",cartonWeight);map.put("cartonType",cartonType);map.put("cartonPipeNumber",cartonPipeNumber);
+        map.put("cartonNumber",cartonNumber);map.put("cartonPrice",cartonPrice);map.put("labelType",labelType);
         map.put("trayType",trayType);map.put("trayNumber",trayNumber);
         map.put("trayCapacity",trayCapacity);map.put("rollNumber",rollNumber);map.put("rollRoughWeight",rollRoughWeight);
         map.put("modelUnitPrice",modelUnitPrice);map.put("modelTotalPrice",modelTotalPrice);map.put("modelProcessCost",modelProcessCost);
@@ -141,7 +143,7 @@ public class OrderController {
     public CommonResult delOrderModel(HttpServletRequest request){
         String orderModelId = request.getParameter("orderModelId");
         if (StringUtil.isEmpty(orderModelId)) return new CommonResult(500,"orderModelId 为空");
-        Integer i = orderService.delOrderModel(Integer.parseInt(orderModelId));
+        Integer i = orderService.delOrderModel(orderModelId);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -272,7 +274,7 @@ public class OrderController {
         if (StringUtil.isEmpty(orderStatus)) return new CommonResult(500,"orderStatus 为空");
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        PageInfo pageInfo = orderService.orderFormPageList(Integer.parseInt(pageNum),Integer.parseInt(orderStatus),Integer.parseInt(userId));
+        PageInfo pageInfo = orderService.orderFormPageList(Integer.parseInt(pageNum),Integer.parseInt(orderStatus),userId);
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -288,7 +290,7 @@ public class OrderController {
         if (StringUtil.isEmpty(orderStatus)) return new CommonResult(500,"orderStatus 为空");
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        List<OrderForm> orderFormList = orderService.orderFormList(Integer.parseInt(orderStatus),Integer.parseInt(userId));
+        List<OrderForm> orderFormList = orderService.orderFormList(Integer.parseInt(orderStatus),userId);
         if (orderFormList.size()>0) return new CommonResult(200,"查询成功",orderFormList);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -303,7 +305,7 @@ public class OrderController {
     public CommonResult orderFormInfo(HttpServletRequest request){
         String orderFormId = request.getParameter("orderFormId");
         if (StringUtil.isEmpty(orderFormId)) return new CommonResult(500,"orderFormId 为空");
-        OrderForm orderForm = orderService.orderFormInfo(Integer.parseInt(orderFormId));
+        OrderForm orderForm = orderService.orderFormInfo(orderFormId);
         if (orderForm!=null) return new CommonResult(200,"查询成功",orderForm);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -318,7 +320,7 @@ public class OrderController {
     public CommonResult orderFormInfo1(HttpServletRequest request){
         String orderFormId = request.getParameter("orderFormId");
         if (StringUtil.isEmpty(orderFormId)) return new CommonResult(500,"orderFormId 为空");
-        Map<String,Object> orderForm = orderService.orderFormInfo1(Integer.parseInt(orderFormId));
+        Map<String,Object> orderForm = orderService.orderFormInfo1(orderFormId);
         if (orderForm!=null) return new CommonResult(200,"查询成功",orderForm);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -332,7 +334,7 @@ public class OrderController {
     public CommonResult orderAddressInfo(HttpServletRequest request){
         String orderAddressId = request.getParameter("orderAddressId");
         if (StringUtil.isEmpty(orderAddressId)) return new CommonResult(500,"orderAddressId 为空");
-        OrderAddress orderAddress = orderService.orderAddressInfo(Integer.parseInt(orderAddressId));
+        OrderAddress orderAddress = orderService.orderAddressInfo(orderAddressId);
         if (orderAddress!=null) return new CommonResult(200,"查询成功",orderAddress);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -382,7 +384,7 @@ public class OrderController {
         if (StringUtil.isEmpty(orderFormId)) return new CommonResult(500,"orderFormId 为空");
         String couponId = request.getParameter("couponId");
         if (StringUtil.isEmpty(couponId)) return new CommonResult(500,"couponId 为空");
-        Integer i = orderService.bindCoupon(Integer.parseInt(orderFormId),Long.valueOf(couponId));
+        Integer i = orderService.bindCoupon(orderFormId,couponId);
         if (i==0) return new CommonResult(200,"绑定成功");
         else if (i==1) return new CommonResult(201,"该订单不存在");
         else if (i==2) return new CommonResult(201,"当前状态无法绑定返现红包");
@@ -421,7 +423,7 @@ public class OrderController {
     public CommonResult orderModelList1(HttpServletRequest request){
         String orderId = request.getParameter("orderId");
         if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"orderId 为空");
-        List<OrderModel> orderModelList = orderService.orderModelList(Integer.parseInt(orderId));
+        List<OrderModel> orderModelList = orderService.orderModelList(orderId);
         if (orderModelList.size()>0) return new CommonResult(200,"查询成功",orderModelList);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -436,7 +438,7 @@ public class OrderController {
     public CommonResult orderModelList2(HttpServletRequest request){
         String orderId = request.getParameter("orderId");
         if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"orderId 为空");
-        List<OrderModel> orderModelList = orderService.orderModelList1(Integer.parseInt(orderId),2);
+        List<OrderModel> orderModelList = orderService.orderModelList1(orderId,2);
         if (orderModelList.size()>0) return new CommonResult(200,"查询成功",orderModelList);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -453,7 +455,7 @@ public class OrderController {
         if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"orderId 为空");
         String orderAddressType = request.getParameter("orderAddressType");
         if (StringUtil.isEmpty(orderAddressType)) return new CommonResult(500,"orderAddressType 为空");
-        List<OrderAddress> orderAddressList = orderService.orderAddressList(Integer.parseInt(orderId),Integer.parseInt(orderAddressType));
+        List<OrderAddress> orderAddressList = orderService.orderAddressList(orderId,Integer.parseInt(orderAddressType));
         if (orderAddressList.size()>0) return new CommonResult(200,"查询成功",orderAddressList);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -520,7 +522,7 @@ public class OrderController {
         if (StringUtil.isEmpty(orderAddressShopStatus)) return new CommonResult(500,"orderAddressShopStatus 为空");
         String orderAddressLogisticsNumber = request.getParameter("orderAddressLogisticsNumber");
         OrderAddress orderAddress = new OrderAddress();
-        orderAddress.setId(Long.valueOf(orderAddressId));
+        orderAddress.setId(orderAddressId);
         orderAddress.setOrderAddressShopStatus(Integer.parseInt(orderAddressShopStatus));
         if (StringUtil.isEmpty(orderAddressLogisticsNumber)) orderAddress.setOrderAddressLogisticsNumber(orderAddressLogisticsNumber);
         Integer i = orderService.updateOrderAddress(orderAddress);
@@ -597,4 +599,17 @@ public class OrderController {
         return new CommonResult(200,"查询成功",map);
     }
 
+    /**
+     * 通过合同订单id查询所有型号
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/order/orderFormById")
+    public CommonResult orderFormById(HttpServletRequest request){
+        String orderId = request.getParameter("orderId");
+        if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"orderId 为空");
+        OrderForm orderForm = orderService.orderFormById(orderId);
+        if (orderForm==null) return new CommonResult(201,"订单不存在",null);
+        else return new CommonResult(200,"查询成功",orderForm);
+    }
 }

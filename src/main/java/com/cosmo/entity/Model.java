@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Data
 public class Model {
-    private Long id;
+    private String id;
 
     private Integer type;
 
@@ -19,7 +19,7 @@ public class Model {
 
     private String typeName;
 
-    private Long configId;
+    private String configId;
 
     private Integer status;
 

@@ -80,7 +80,7 @@ public class UserService {
      * @return
      */
     @Transactional(value="txManager1")
-    public Integer delUserInfo(Integer id){
+    public Integer delUserInfo(String id){
         Integer i = userInfoMapper.deleteById(id);
         QueryWrapper<UserRess> userRessQueryWrapper = new QueryWrapper<>();
         userRessQueryWrapper.eq("user_id",id);
@@ -171,7 +171,7 @@ public class UserService {
      * @param userId
      * @return
      */
-    public int countRess(long userId,int type){
+    public int countRess(String userId,int type){
         QueryWrapper<UserRess> userRessQueryWrapper = new QueryWrapper<>();
         userRessQueryWrapper.eq("user_id",userId).eq("type",type);
         return userRessMapper.selectCount(userRessQueryWrapper);
@@ -200,7 +200,7 @@ public class UserService {
      * @param id
      * @return
      */
-    public boolean delRess(Integer id){
+    public boolean delRess(String id){
         Integer i = userRessMapper.deleteById(id);
         if (i>0) return true;
         return false;
@@ -211,7 +211,7 @@ public class UserService {
      * @param userId
      * @return
      */
-    public List<UserRess> userResses(Integer userId){
+    public List<UserRess> userResses(String userId){
         QueryWrapper<UserRess> userRessQueryWrapper = new QueryWrapper<>();
         userRessQueryWrapper.eq("user_id",userId).orderByDesc("type");
         List<UserRess> userRessList = userRessMapper.selectList(userRessQueryWrapper);
@@ -223,7 +223,7 @@ public class UserService {
      * @param userId
      * @return
      */
-    public List<UserRess> userRessList(Integer userId,Integer type){
+    public List<UserRess> userRessList(String userId,Integer type){
         QueryWrapper<UserRess> userRessQueryWrapper = new QueryWrapper<>();
         userRessQueryWrapper.eq("user_id",userId).eq("type",type);
         List<UserRess> userRessList = userRessMapper.selectList(userRessQueryWrapper);
@@ -235,7 +235,7 @@ public class UserService {
      * @param userId
      * @return
      */
-    public List<UserInvoice> userInvoices(Integer userId){
+    public List<UserInvoice> userInvoices(String userId){
         QueryWrapper<UserInvoice> userInvoiceQueryWrapper = new QueryWrapper<>();
         userInvoiceQueryWrapper.eq("user_id",userId);
         List<UserInvoice> userInvoiceList = userInvoiceMapper.selectList(userInvoiceQueryWrapper);
@@ -267,7 +267,7 @@ public class UserService {
      * @param userId
      * @return
      */
-    public int countInvoice(int userId){
+    public int countInvoice(String userId){
         QueryWrapper<UserInvoice> userInvoiceQueryWrapper = new QueryWrapper<>();
         userInvoiceQueryWrapper.eq("user_id",userId);
         return userInvoiceMapper.selectCount(userInvoiceQueryWrapper);
@@ -307,7 +307,7 @@ public class UserService {
      * @param id
      * @return
      */
-    public Integer delInvoice(Integer id){
+    public Integer delInvoice(String id){
         return userInvoiceMapper.deleteById(id);
     }
 
@@ -327,7 +327,7 @@ public class UserService {
             Coupon coupon = (Coupon)pageInfo.getList().get(i);
             coupon.setUser(userInfoMapper.selectById(coupon.getUserId()));
             if (!"[]".equals(coupon.getAgoUserId())){
-                List<Integer> userIdList = JSON.parseArray(coupon.getAgoUserId(),Integer.class);
+                List<String> userIdList = JSON.parseArray(coupon.getAgoUserId(),String.class);
                 QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
                 userInfoQueryWrapper.in("id",userIdList);
                 coupon.setAgoUser(userInfoMapper.selectList(userInfoQueryWrapper));
@@ -342,7 +342,7 @@ public class UserService {
      * @param status
      * @return
      */
-    public PageInfo selectUserCoupon(Integer pageNum, Integer userId, Integer status){
+    public PageInfo selectUserCoupon(Integer pageNum, String userId, Integer status){
         QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
         couponQueryWrapper.eq("user_id",userId).eq("status",status);
         Page page = new Page(pageNum,10);
@@ -351,7 +351,7 @@ public class UserService {
         for (int i = 0;i<pageInfo.getList().size();i++){
             Coupon coupon = (Coupon)pageInfo.getList().get(i);
             if (!"[]".equals(coupon.getAgoUserId())){
-                List<Integer> userIdList = JSON.parseArray(coupon.getAgoUserId(),Integer.class);
+                List<String> userIdList = JSON.parseArray(coupon.getAgoUserId(),String.class);
                 QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
                 userInfoQueryWrapper.in("id",userIdList);
                 coupon.setAgoUser(userInfoMapper.selectList(userInfoQueryWrapper));
@@ -369,7 +369,7 @@ public class UserService {
         Integer index = 0;
         for (int i=0;i<Integer.parseInt(map.get("number"));i++){
             Coupon coupon = new Coupon();
-            coupon.setUserId(Long.valueOf(map.get("userId")));
+            coupon.setUserId(map.get("userId"));
             coupon.setAgoUserId("[]");
             coupon.setName(map.get("name"));
             coupon.setFull(new BigDecimal(map.get("full")));
@@ -402,7 +402,7 @@ public class UserService {
      */
     public Integer getShare(Map<String,String> map){
         Coupon coupon = couponMapper.selectById(Integer.parseInt(map.get("couponId")));
-        if (coupon.getUserId()!=Integer.parseInt(map.get("agoUserId"))) return 1;
+        if (!coupon.getUserId().equals(map.get("agoUserId"))) return 1;
         try {
             Date time = ft.parse(coupon.getTime());
             int compareTo = new Date().compareTo(time);
@@ -411,11 +411,11 @@ public class UserService {
             e.printStackTrace();
         }
         if (coupon.getStatus()!=0) return 3;
-        if (Integer.parseInt(map.get("agoUserId"))==Integer.parseInt(map.get("userId"))) return 5;
-        List<Integer> agoUserId = JSON.parseArray(coupon.getAgoUserId(),Integer.class);
-        agoUserId.add(Integer.parseInt(map.get("agoUserId")));
+        if (map.get("agoUserId").equals(map.get("userId"))) return 5;
+        List<String> agoUserId = JSON.parseArray(coupon.getAgoUserId(),String.class);
+        agoUserId.add(map.get("agoUserId"));
         coupon.setAgoUserId(JSON.toJSONString(agoUserId));
-        coupon.setUserId(Long.valueOf(map.get("userId")));
+        coupon.setUserId(map.get("userId"));
         int i = couponMapper.updateById(coupon);
         if (i>0) return 0;
         return 4;
@@ -470,7 +470,7 @@ public class UserService {
      * @param userId
      * @return
      */
-    public String userPrice(Integer userId){
+    public String userPrice(String userId){
         UserInfo userInfo = userInfoMapper.selectById(userId);
         return userInfo.getPrice().toString();
     }
@@ -481,7 +481,7 @@ public class UserService {
      * @return
      */
     public Map<String,String> userMemberPrice(String userId){
-        UserInfo userInfo = userInfoMapper.selectById(Long.valueOf(userId));
+        UserInfo userInfo = userInfoMapper.selectById(userId);
         Map<String,String> map = new HashedMap();
         map.put("memberPrice",userInfo.getMemberPrice().toString());
         map.put("withdrawPrice",userInfo.getWithdrawPrice().toString());
@@ -493,7 +493,7 @@ public class UserService {
      * @param pageNum
      * @return
      */
-    public PageInfo userPriceList(Integer pageNum,Integer userId){
+    public PageInfo userPriceList(Integer pageNum,String userId){
         QueryWrapper<UserPriceInfo> userPriceInfoQueryWrapper = new QueryWrapper<>();
         userPriceInfoQueryWrapper.eq("user_id",userId).orderByDesc("id");
         Page page = new Page(pageNum,10);
@@ -532,7 +532,7 @@ public class UserService {
      */
     public Integer updateUserMember(Map<String,Object> map){
         UserMember userMember = new UserMember();
-        userMember.setId(Long.valueOf(map.get("id").toString()));
+        userMember.setId(map.get("id").toString());
         userMember.setName((String)map.get("name"));
         if (map.get("moneyMin")==null||"null".equals(map.get("moneyMin"))){ userMember.setMoneyMin(null); }
         else { userMember.setMoneyMin(new BigDecimal(String.valueOf(map.get("moneyMin")))); }
@@ -579,8 +579,8 @@ public class UserService {
         List<UserMemberModel> userMemberModelList = userMemberModelMapper.selectList(userMemberModelQueryWrapper);
         if (userMemberModelList.size()>0) return 201; //该级别会员已有该型号折扣
         UserMemberModel userMemberModel = new UserMemberModel();
-        userMemberModel.setMemberId(Long.valueOf(map.get("memberId")));
-        userMemberModel.setModelId(Long.valueOf(map.get("modelId")));
+        userMemberModel.setMemberId(map.get("memberId"));
+        userMemberModel.setModelId(map.get("modelId"));
         userMemberModel.setDiscount(new BigDecimal(map.get("discount")));
         return userMemberModelMapper.insert(userMemberModel);
     }
@@ -591,7 +591,7 @@ public class UserService {
      * @return
      */
     public Integer delUserMemberModel(String userMemberModelId){
-        return userMemberModelMapper.deleteById(Integer.parseInt(userMemberModelId));
+        return userMemberModelMapper.deleteById(userMemberModelId);
     }
 
     /**
@@ -601,7 +601,7 @@ public class UserService {
      *  null: 当前用户不存在
      */
     public List<UserMemberModel> userMemberModelList(String userId){
-        UserInfo userInfo = userInfoMapper.selectById(Integer.parseInt(userId));
+        UserInfo userInfo = userInfoMapper.selectById(userId);
         if (userInfo==null) return null;
         QueryWrapper<UserMemberModel> userMemberModelQueryWrapper = new QueryWrapper<>();
         userMemberModelQueryWrapper.eq("member_id",userInfo.getMemberId());
@@ -617,7 +617,7 @@ public class UserService {
      *  203: 该用户已是正式用户
      */
     public Integer updateUserSerialNumber(Map<String,String> map){
-        UserInfo userInfo = userInfoMapper.selectById(Integer.parseInt(map.get("userId")));
+        UserInfo userInfo = userInfoMapper.selectById(map.get("userId"));
         if (userInfo.getStatus()==1) return 203; //该用户已是正式用户
         QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
         userInfoQueryWrapper.eq("serial_number",map.get("serialNumber"));
@@ -641,11 +641,11 @@ public class UserService {
      *  206: 会员预存金额超过会员预存金额转待提现金额最大金额
      */
     public Integer addUserMemberApply(Map<String,String> map){
-        Long userId = Long.valueOf(map.get("userId"));
-        Long memberId = Long.valueOf(map.get("memberId"));
+        String userId = map.get("userId");
+        String memberId = map.get("memberId");
         UserInfo userInfo = userInfoMapper.selectById(userId);
         if (userInfo == null) return 201;//该用户不存在
-        if (userInfo.getStatus()==1&&memberId.longValue()==0) return 202;//该用户已是正式用户，不可多次申请
+        if (userInfo.getStatus()==1&&"0".equals(memberId)) return 202;//该用户已是正式用户，不可多次申请
         UserMember userMember = userMemberMapper.selectById(memberId);
         if (userMember == null) return 203;//该会员不存在
         QueryWrapper<UserMemberApply> userMemberApplyQueryWrapper = new QueryWrapper<>();
@@ -653,9 +653,9 @@ public class UserService {
         List<UserMemberApply> userMemberApplies = userMemberApplyMapper.selectList(userMemberApplyQueryWrapper);
         if (userMemberApplies.size()>0) return 204;//每个用户同时只可存在一条申请
         UserMemberApply userMemberApply = new UserMemberApply();
-        if (userInfo.getMemberId()!=0){
+        if (!"0".equals(userInfo.getMemberId())){
             //判断要申请的会员类型是否和原会员类型相同
-            if (userInfo.getMemberId().longValue()==memberId.longValue()){
+            if (userInfo.getMemberId().equals(memberId)){
                 return 205;//已是当前申请的会员类型
             }else {
                 userMemberApply.setStatus(0);
@@ -700,7 +700,7 @@ public class UserService {
             Map<String,String> userMemberApplyMap = JSON.parseObject(JSON.toJSONString(userMemberApply),Map.class);
             UserInfo userInfo = userInfoMapper.selectById(userMemberApply.getUserId());
             userMemberApplyMap.put("wxName",userInfo.getWxName());
-            if (userMemberApply.getMemberId()==0) {userMemberApplyMap.put("memberName","正式用户");}
+            if ("0".equals(userMemberApply.getMemberId())) {userMemberApplyMap.put("memberName","正式用户");}
             else {
                 UserMember userMember = userMemberMapper.selectById(userMemberApply.getMemberId());
                 userMemberApplyMap.put("memberName",userMember.getName());
@@ -716,7 +716,7 @@ public class UserService {
      * @param id
      * @return
      */
-    public Integer delUserMemberApply(Integer id){
+    public Integer delUserMemberApply(String id){
         return userMemberApplyMapper.deleteById(id);
     }
 
@@ -731,7 +731,7 @@ public class UserService {
      */
     @Transactional(value="txManager1")
     public Integer updateUserStatus(Map<String,String> map){
-        UserMemberApply userMemberApply = userMemberApplyMapper.selectById(Integer.parseInt(map.get("userMemberApplyId")));
+        UserMemberApply userMemberApply = userMemberApplyMapper.selectById(map.get("userMemberApplyId"));
         if (userMemberApply==null) return 204;//该申请不存在
         Integer i = this.updateUserSerialNumber(map);
         if (!(i>0&&i<201)) return i;
@@ -751,11 +751,11 @@ public class UserService {
      */
     @Transactional(value="txManager1")
     public Integer updateUserMember1(Map<String,String> map){
-        UserMemberApply userMemberApply = userMemberApplyMapper.selectById(Integer.parseInt(map.get("userMemberApplyId")));
+        UserMemberApply userMemberApply = userMemberApplyMapper.selectById(map.get("userMemberApplyId"));
         if (userMemberApply==null) return 201;//该申请不存在
-        UserInfo userInfo = userInfoMapper.selectById(Integer.parseInt(map.get("userId")));
+        UserInfo userInfo = userInfoMapper.selectById(map.get("userId"));
         if (userInfo==null) return 202;//该用户不存在
-        UserMember userMember = userMemberMapper.selectById(Integer.parseInt(map.get("memberId")));
+        UserMember userMember = userMemberMapper.selectById(map.get("memberId"));
         if (userMember==null) return 203;//该会员类型不存在
         if ("0".equals(map.get("userStatus"))) {
             QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
@@ -788,7 +788,7 @@ public class UserService {
      * @return
      */
     public UserMember selectUserMemberById(String memberId){
-        return userMemberMapper.selectById(Integer.parseInt(memberId));
+        return userMemberMapper.selectById(memberId);
     }
 
     /**
@@ -801,7 +801,7 @@ public class UserService {
         Map<String,String> userInfoMap = JSON.parseObject(JSON.toJSONString(userInfo),Map.class);
         if (userInfo.getStatus()==0) userInfoMap.put("userStatus","体验用户");
         else if (userInfo.getStatus()==1) userInfoMap.put("userStatus","正式用户");
-        if (userInfo.getMemberId()==0) userInfoMap.put("memberName","非会员");
+        if ("0".equals(userInfo.getMemberId())) userInfoMap.put("memberName","非会员");
         else {
             UserMember userMember = userMemberMapper.selectById(userInfo.getMemberId());
             userInfoMap.put("memberName",userMember.getName());
@@ -815,7 +815,7 @@ public class UserService {
      * @return
      */
     public UserInfo userInfoById(String userId){
-        return userInfoMapper.selectById(Integer.parseInt(userId));
+        return userInfoMapper.selectById(userId);
     }
 
     /**
@@ -827,9 +827,9 @@ public class UserService {
      *  203: 该编号已存在
      */
     public Integer updateUserInfo(Map<String,String> userInfoMap){
-        UserInfo userInfo = userInfoMapper.selectById(Integer.parseInt(userInfoMap.get("userId")));
+        UserInfo userInfo = userInfoMapper.selectById(userInfoMap.get("userId"));
         if (userInfo==null) return 201;//该用户不存在
-        UserMember userMember = userMemberMapper.selectById(Integer.parseInt(userInfoMap.get("memberId")));
+        UserMember userMember = userMemberMapper.selectById(userInfoMap.get("memberId"));
         if (userMember==null) return 202;//该会员类型不存在
         userInfo.setMemberId(userMember.getId());
         userInfo.setPrice(new BigDecimal(userInfoMap.get("price")));
@@ -860,7 +860,7 @@ public class UserService {
      *  202: 该用户待提现金额不足以本次申请扣除
      */
     public Integer addUserWithdrawPriceApply(Map<String,String> map){
-        UserInfo userInfo = userInfoMapper.selectById(Long.valueOf(map.get("userId")));
+        UserInfo userInfo = userInfoMapper.selectById(map.get("userId"));
         if (userInfo==null) return 201;//该用户不存在
         BigDecimal withdrawPrice = new BigDecimal(map.get("withdrawPrice"));
         if (userInfo.getWithdrawPrice().compareTo(withdrawPrice)==-1) return 202;//该用户待提现金额不足以本次申请扣除
@@ -903,7 +903,7 @@ public class UserService {
         IPage userWithdrawPriceApplyList = userWithdrawPriceApplyMapper.selectMapsPage(page,userWithdrawPriceApplyQueryWrapper);
         PageInfo pageInfo = new PageInfo(userWithdrawPriceApplyList);
         for (HashMap<String,Object> userWithdrawPriceApplyMap:(List<HashMap<String,Object>>)pageInfo.getList()){
-            UserInfo userInfo = userInfoMapper.selectById(Long.valueOf(userWithdrawPriceApplyMap.get("user_id").toString()));
+            UserInfo userInfo = userInfoMapper.selectById(userWithdrawPriceApplyMap.get("user_id").toString());
             userWithdrawPriceApplyMap.put("user_name",userInfo.getWxName());
         }
         return pageInfo;

@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Data
 public class SysUser implements Serializable {
-    private Long id;
+    private String id;
 
     private String userName;
 
@@ -29,7 +29,7 @@ public class SysUser implements Serializable {
 
     private Integer loginCount;
 
-    private Long createId;
+    private String createId;
 
     private String createTime;
 

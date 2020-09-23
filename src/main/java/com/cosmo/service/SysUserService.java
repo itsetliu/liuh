@@ -77,7 +77,7 @@ public class SysUserService {
      * @param userId
      * @return
      */
-    public SysUser userById(long userId){
+    public SysUser userById(String userId){
         return sysUserMapper.selectById(userId);
     }
 
@@ -87,7 +87,7 @@ public class SysUserService {
      * @param userId
      * @return
      */
-    public List<SysRole> roleList(long userId){
+    public List<SysRole> roleList(String userId){
         return sysUserMapper.roleList(userId);
     }
 
@@ -96,7 +96,7 @@ public class SysUserService {
      * @param userId
      * @return
      */
-    public List<Menu> menuList(long userId){
+    public List<Menu> menuList(String userId){
         return sysUserMapper.menuList(userId);
     }
 
@@ -138,7 +138,7 @@ public class SysUserService {
      * 通过pid查询所有权限
      * @return
      */
-    public List<SysMenu> sysMenus(Long pid){
+    public List<SysMenu> sysMenus(String pid){
         return sysMenuMapper.sysMenuList(pid);
     }
 
@@ -146,7 +146,7 @@ public class SysUserService {
      * 根据父id查询
      * @return
      */
-    public List<SysMenu> sysMenuList(Integer pid){
+    public List<SysMenu> sysMenuList(String pid){
         QueryWrapper<SysMenu> sysMenuQueryWrapper = new QueryWrapper<>();
         sysMenuQueryWrapper.eq("pid",pid);
         return sysMenuMapper.selectList(sysMenuQueryWrapper);
@@ -166,7 +166,7 @@ public class SysUserService {
      * @param roleId
      * @return
      */
-    public List<SysMenu> sysRoleMenuList(Long roleId){
+    public List<SysMenu> sysRoleMenuList(String roleId){
         return sysMenuMapper.sysRoleMenuList(roleId);
     }
 
@@ -175,7 +175,7 @@ public class SysUserService {
      * @param roleId
      * @return
      */
-    public SysRole sysRoleById(Long roleId){
+    public SysRole sysRoleById(String roleId){
         SysRole sysRole = sysRoleMapper.selectById(roleId);
         if (sysRole!=null) sysRole.setMenuList(this.sysRoleMenuList(roleId));
         return sysRole;
@@ -196,7 +196,7 @@ public class SysUserService {
      * @param roleId
      * @return
      */
-    public Map<String, Object> sysMenuListSon(Long roleId){
+    public Map<String, Object> sysMenuListSon(String roleId){
         Map<String,Object> map = new HashMap<>();
         List<SysMenu> sysMenuList1 = this.sysMenuListSon1();
         List<SysMenu> sysMenuList2 = sysMenuMapper.sysMenuListRoleSon(roleId);
@@ -219,7 +219,7 @@ public class SysUserService {
      * @param roleId
      * @return
      */
-    public int delSysRoleMenus(long roleId){
+    public int delSysRoleMenus(String roleId){
         QueryWrapper<SysRoleMenu> sysRoleMenuQueryWrapper = new QueryWrapper<>();
         sysRoleMenuQueryWrapper.eq("role_id",roleId);
         return sysRoleMenuMapper.delete(sysRoleMenuQueryWrapper);
@@ -231,7 +231,7 @@ public class SysUserService {
      * @param menuIds
      * @return
      */
-    public int addSysRoleMenus(long roleId,List<Integer> menuIds){
+    public int addSysRoleMenus(String roleId,List<Integer> menuIds){
         if (menuIds.size()==0) return 0;
         Map<String, Object> map = new HashMap<>();
         map.put("roleId",roleId);
@@ -245,7 +245,7 @@ public class SysUserService {
      */
     @Transactional(value="txManager1")
     public int updateSysRole(Map<String, String> map){
-        long id = Long.valueOf(map.get("id"));
+        String id = map.get("id");
         String name = map.get("name");
         String remark = map.get("remark");
         int status = Integer.parseInt(map.get("status"));
@@ -283,7 +283,7 @@ public class SysUserService {
      */
     @Transactional(value="txManager1")
     public int addSysRole(Map<String, String> map){
-        long userId = Integer.parseInt(map.get("userId"));
+        String userId = map.get("userId");
         String name = map.get("name");
         String remark = map.get("remark");
         int status = Integer.parseInt(map.get("status"));
@@ -324,7 +324,7 @@ public class SysUserService {
      * @param roleId
      * @return
      */
-    public int delUserRoles(Long userId,Integer roleId,Integer type){
+    public int delUserRoles(String userId,String roleId,Integer type){
         QueryWrapper<SysUserRole> sysUserRoleQueryWrapper = new QueryWrapper<>();
         if (type==0){//type==0  通过用户id删除身份关联
             sysUserRoleQueryWrapper.eq("user_id",userId);
@@ -341,7 +341,7 @@ public class SysUserService {
      * @param roleId
      * @return
      */
-    public int delRoleById(Integer roleId){
+    public int delRoleById(String roleId){
         int delRole = sysRoleMapper.deleteById(roleId);
         if (delRole<=0) return delRole;
         this.delUserRoles(null,roleId,1);
@@ -363,7 +363,7 @@ public class SysUserService {
      * @param roleIds
      * @return
      */
-    public int addSysUserRoles(long userId,List<Integer> roleIds){
+    public int addSysUserRoles(String userId,List<String> roleIds){
         if (roleIds.size()==0) return 0;
         Map<String, Object> map = new HashMap<>();
         map.put("userId",userId);
@@ -410,7 +410,7 @@ public class SysUserService {
      */
     @Transactional(value="txManager1")
     public int addSysUsers(Map<String, String> map){
-        long userId = Integer.parseInt(map.get("userId"));
+        String userId = map.get("userId");
         String nickName = map.get("nickName");
         String userName = map.get("userName");
         String password = map.get("password");
@@ -431,7 +431,7 @@ public class SysUserService {
         sysUser.setCreateTime(ft.format(new Date()));
         int addUser = sysUserMapper.insert(sysUser);
         if (addUser<=0) return addUser;
-        List<Integer> roleIds2 = JSON.parseArray(roleIds,Integer.class);
+        List<String> roleIds2 = JSON.parseArray(roleIds,String.class);
         this.addSysUserRoles(sysUser.getId(),roleIds2);
         return addUser;
     }
@@ -442,7 +442,7 @@ public class SysUserService {
      */
     @Transactional(value="txManager1")
     public int updateSysUsers(Map<String, String> map){
-        long id = Integer.parseInt(map.get("id"));
+        String id = map.get("id");
         String nickName = map.get("nickName");
         String phone = map.get("phone");
         String email = map.get("email");
@@ -456,7 +456,7 @@ public class SysUserService {
         sysUser.setStatus(status);
         int updateUser = sysUserMapper.updateById(sysUser);
         if (updateUser<=0) return updateUser;
-        List<Integer> roleIds2 = JSON.parseArray(roleIds,Integer.class);
+        List<String> roleIds2 = JSON.parseArray(roleIds,String.class);
         this.delUserRoles(id,null,0);
         this.addSysUserRoles(sysUser.getId(),roleIds2);
         return updateUser;
@@ -467,7 +467,7 @@ public class SysUserService {
      * @return
      */
     public int updatePassword(Map<String, String> map){
-        long id = Integer.parseInt(map.get("id"));
+        String id = map.get("id");
         String password = map.get("password");
         SysUser sysUser = new SysUser();
         sysUser.setId(id);
@@ -482,7 +482,7 @@ public class SysUserService {
      * @return
      */
     @Transactional(value="txManager1")
-    public int delUserById(long id){
+    public int delUserById(String id){
         int delUser = sysUserMapper.deleteById(id);
         if (delUser<=0) return delUser;
         this.delUserRoles(id,null,0);

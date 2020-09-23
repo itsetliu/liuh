@@ -12,9 +12,9 @@ import java.util.List;
  */
 @Data
 public class OrderAddress {
-    private Long id;
+    private String id;
 
-    private Long orderId;
+    private String orderId;
 
     private String companyName;
 

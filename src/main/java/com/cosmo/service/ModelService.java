@@ -29,6 +29,8 @@ public class ModelService {
     @Resource
     private ModelSuttleMapper modelSuttleMapper;
     @Resource
+    private ModelCartonMapper modelCartonMapper;
+    @Resource
     private ConfigMapper configMapper;
     @Resource
     private UserInfoMapper userInfoMapper;
@@ -77,7 +79,7 @@ public class ModelService {
      * @param modelId
      * @return
      */
-    public Integer delModelThickness(Long modelId){
+    public Integer delModelThickness(String modelId){
         QueryWrapper<ModelThickness> modelThicknessQueryWrapper = new QueryWrapper<>();
         modelThicknessQueryWrapper.eq("model_id",modelId);
         return modelThicknessMapper.delete(modelThicknessQueryWrapper);
@@ -108,7 +110,7 @@ public class ModelService {
      * @param modelId
      * @return
      */
-    public Integer delModelSuttles(Long modelId){
+    public Integer delModelSuttles(String modelId){
         QueryWrapper<ModelSuttle> modelSuttleQueryWrapper = new QueryWrapper<>();
         modelSuttleQueryWrapper.eq("model_id",modelId);
         return modelSuttleMapper.delete(modelSuttleQueryWrapper);
@@ -167,7 +169,7 @@ public class ModelService {
      * @param modelId
      * @return
      */
-    public List<ModelThickness> modelThicknessList(Integer modelId){
+    public List<ModelThickness> modelThicknessList(String modelId){
         QueryWrapper<ModelThickness> modelThicknessQueryWrapper = new QueryWrapper<>();
         modelThicknessQueryWrapper.eq("model_id",modelId);
         return modelThicknessMapper.selectList(modelThicknessQueryWrapper);
@@ -177,7 +179,7 @@ public class ModelService {
      * @param modelId
      * @return
      */
-    public List<ModelSuttle> modelSuttleList(Integer modelId){
+    public List<ModelSuttle> modelSuttleList(String modelId){
         QueryWrapper<ModelSuttle> modelSuttleQueryWrapper = new QueryWrapper<>();
         modelSuttleQueryWrapper.eq("model_id",modelId);
         return modelSuttleMapper.selectList(modelSuttleQueryWrapper);
@@ -189,7 +191,7 @@ public class ModelService {
      * @return
      */
     @Transactional(value="txManager1")
-    public Map<String,Object> updateInfo(Integer modelId){
+    public Map<String,Object> updateInfo(String modelId){
         Map<String,Object> map = new HashMap<>();
         map.put("modelThicknessList",this.modelThicknessList(modelId));
         map.put("modelSuttleList",this.modelSuttleList(modelId));
@@ -233,7 +235,7 @@ public class ModelService {
      * @return
      */
     @Transactional(value="txManager1")
-    public Integer delModel(Long modelId){
+    public Integer delModel(String modelId){
         Model model = modelMapper.selectById(modelId);
         Integer i = modelMapper.deleteById(modelId);
         if (i<=0) return i;
@@ -315,8 +317,9 @@ public class ModelService {
             map1.put("boxWeigth",boxWeigth.get(0).getValue());
             QueryWrapper<Config> configQueryWrapper2 = new QueryWrapper<>();
             configQueryWrapper2.eq("code","boxPrice");
-            List<Config> boxPrice = configMapper.selectList(configQueryWrapper2);
-            map1.put("boxPrice",boxPrice.get(0).getValue());
+//            List<Config> boxPrice = configMapper.selectList(configQueryWrapper2);
+//            map1.put("boxPrice",boxPrice.get(0).getValue());
+            map1.put("boxPrice","7");
             QueryWrapper<Config> configQueryWrapper3 = new QueryWrapper<>();
             configQueryWrapper3.eq("code","tubePrice");
             List<Config> tubePrice = configMapper.selectList(configQueryWrapper3);
@@ -346,7 +349,7 @@ public class ModelService {
      * @param modelId
      * @return
      */
-    public Map<String,Object> byId(Integer modelId){
+    public Map<String,Object> byId(String modelId){
         Map<String,Object> map = new HashMap<>();
         Model model = modelMapper.selectById(modelId);
         map.put("id",model.getId());
@@ -390,7 +393,7 @@ public class ModelService {
      * @param modelShowId
      * @return
      */
-    public Integer delModelShow(Integer modelShowId){
+    public Integer delModelShow(String modelShowId){
         return modelShowMapper.deleteById(modelShowId);
     }
 
@@ -435,10 +438,9 @@ public class ModelService {
      * @return
      *      201:userId错误/不存在
      */
-    public Integer lockPrice(Map<String,String> map){
-        Long userId = Long.valueOf(map.get("userId"));
-        UserInfo userInfo = userInfoMapper.selectById(userId);
-        if (userInfo==null) return 201;
+    public String lockPrice(Map<String,String> map){
+        UserInfo userInfo = userInfoMapper.selectById(map.get("userId"));
+        if (userInfo==null) return "201";
         List<String> nameList = new ArrayList<>();
         List<Map<String,Object>> mapList = new ArrayList<>();
         UserLock userLock = new UserLock();
@@ -459,7 +461,7 @@ public class ModelService {
             }
         });
         userLock.setLockPrice(JSON.toJSONString(mapList));
-        userLock.setUserId(userId);
+        userLock.setUserId(map.get("userId"));
         userLock.setNumber("lockPrice"+new Date().getTime());
         userLock.setStatus(1);
         userLock.setTime(sdf.format(new Date()));
@@ -469,7 +471,7 @@ public class ModelService {
         Integer lockGuaranteeGoldTime = Integer.parseInt(this.getConfigValue("lockGuaranteeGoldTime"));
         redisUtil.set("lockPrice1,"+userLock.getId(),"lockPrice1,"+userLock.getId());
         redisUtil.expire("lockPrice1,"+userLock.getId(),lockGuaranteeGoldTime, TimeUnit.SECONDS);
-        return userLock.getId().intValue();
+        return userLock.getId();
     }
 
     /**
@@ -479,7 +481,7 @@ public class ModelService {
      * @param status
      * @return
      */
-    public PageInfo userLockListPage(Integer pageNum, Integer userId, Integer status){
+    public PageInfo userLockListPage(Integer pageNum, String userId, Integer status){
         QueryWrapper<UserLock> userLockQueryWrapper = new QueryWrapper<>();
         userLockQueryWrapper.eq("user_id",userId).eq("status",status);
         Page page = new Page(pageNum,10);
@@ -500,4 +502,52 @@ public class ModelService {
         userLock.setBalance(new BigDecimal(balance));
         return userLockMapper.updateById(userLock);
     }
+
+    /**
+     * 查询纸箱单价
+     * @return
+     */
+    public List<ModelCarton> selectModelCarton(){
+        QueryWrapper<ModelCarton> modelCartonQueryWrapper = new QueryWrapper<>();
+        modelCartonQueryWrapper.orderBy(true,true,"width","height");
+        return modelCartonMapper.selectList(modelCartonQueryWrapper);
+    }
+
+    /**
+     * 查询纸箱单价
+     * @param map
+     * @return
+     */
+    public PageInfo selectModelCartonPage(Map<String,String> map){
+        Page page = new Page(Long.valueOf(map.get("pageNum")),10);
+        QueryWrapper<ModelCarton> modelCartonQueryWrapper = new QueryWrapper<>();
+        if (!StringUtil.isEmpty(map.get("length"))) modelCartonQueryWrapper.like("length",map.get("length"));
+        if (!StringUtil.isEmpty(map.get("width"))) modelCartonQueryWrapper.like("width",map.get("width"));
+        if (!StringUtil.isEmpty(map.get("height"))) modelCartonQueryWrapper.like("height",map.get("height"));
+        return new PageInfo(modelCartonMapper.selectPage(page,modelCartonQueryWrapper));
+    }
+
+    /**
+     * 新增纸箱规格
+     * @param map
+     * @return
+     */
+    public Integer addModelCarton(Map<String,String> map){
+        ModelCarton modelCarton = new ModelCarton();
+        modelCarton.setLength(Integer.parseInt(map.get("length")));
+        modelCarton.setWidth(Integer.parseInt(map.get("width")));
+        modelCarton.setHeight(Integer.parseInt(map.get("height")));
+        modelCarton.setCartonPrice(new BigDecimal(map.get("cartonPrice")));
+        return modelCartonMapper.insert(modelCarton);
+    }
+
+    /**
+     * 根据id删除纸箱规格
+     * @param modelCartonId
+     * @return
+     */
+    public Integer delModelCarton(String modelCartonId){
+        return modelCartonMapper.deleteById(modelCartonId);
+    }
+
 }

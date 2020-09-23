@@ -44,13 +44,13 @@
   </resultMap>-->
 
   <!--通过用户id查询身份-->
-  <select id="roleList" parameterType="java.lang.Long" resultType="com.cosmo.entity.SysRole">
+  <select id="roleList" parameterType="java.lang.String" resultType="com.cosmo.entity.SysRole">
     select role.* from sys_user_role user_role left join sys_role role on user_role.role_id = role.id
     where user_role.user_id = #{userId} and role.status = 1
   </select>
 
 
-  <select id="menuList" parameterType="java.lang.Long" resultMap="menuListMap">
+  <select id="menuList" parameterType="java.lang.String" resultMap="menuListMap">
       select menu1.id, menu1.title, menu1.icon, menu2.title title2, menu2.url url2, menu2.icon icon2
       from (select menu.*
       from sys_role_menu role_menu left join sys_menu menu on role_menu.menu_id = menu.id

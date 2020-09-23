@@ -10,11 +10,11 @@ import java.math.BigDecimal;
  */
 @Data
 public class OrderModel {
-    private Long id;
+    private String id;
 
-    private Long orderId;
+    private String orderId;
 
-    private Long userId;
+    private String userId;
 
     private Integer modelType;
 
@@ -41,6 +41,8 @@ public class OrderModel {
     private Integer cartonPipeNumber;
 
     private Integer cartonNumber;
+
+    private BigDecimal cartonPrice;
 
     private Integer labelType;
 
@@ -80,9 +82,9 @@ public class OrderModel {
 
     private String orderModelExpireTime;
 
-    private Long userLockId;
+    private String userLockId;
 
-    private Long memberId;
+    private String memberId;
 
     private BigDecimal memberDiscount;
 

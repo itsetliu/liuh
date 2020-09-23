@@ -31,7 +31,7 @@ public class InvoiceController {
     public CommonResult orderList(HttpServletRequest request){
         String userId = request.getParameter("userId");
         if (StringUtils.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        List<OrderForm> orders = invoiceService.orderList(Integer.parseInt(userId));
+        List<OrderForm> orders = invoiceService.orderList(userId);
         if (orders!=null&&orders.size()>0) return new CommonResult(200,"查询成功",orders);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -148,7 +148,7 @@ public class InvoiceController {
         String openBankNum = request.getParameter("openBankNum");
         if (StringUtils.isEmpty(openBankNum)) return new CommonResult(500,"openBankNum 为空");
         Invoice invoice = new Invoice();
-        invoice.setId(Long.valueOf(id));
+        invoice.setId(id);
         invoice.setType(Integer.parseInt(type));
         if ("2".equals(type)) invoice.setTrackingNumber(trackingNumber);
         invoice.setName(name);

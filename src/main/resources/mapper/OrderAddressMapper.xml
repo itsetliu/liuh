@@ -26,7 +26,7 @@
     select * from (select * from order_address
                     where order_id in (select id from order_form where order_status = 2)
                     and order_address_status in (0,1)) orderAddress
-    where orderAddress.order_address_shop_status = #{orderAddressShopStatus}
+    where orderAddress.order_address_shop_status = #{map.orderAddressShopStatus}
     <if test="map.companNyame != '%%'" >
         and orderAddress.company_name like #{map.companNyame}
     </if>

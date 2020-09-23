@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  */
 @Data
 public class UserInfo {
-    private Long id;
+    private String id;
 
     private String openId;
 
@@ -26,7 +26,7 @@ public class UserInfo {
 
     private String lastLoginTime;
 
-    private Long pid;
+    private String pid;
 
     private String referralCode;
 
@@ -36,7 +36,7 @@ public class UserInfo {
 
     private String serialNumber;
 
-    private Long memberId;
+    private String memberId;
 
     private Integer status;
 

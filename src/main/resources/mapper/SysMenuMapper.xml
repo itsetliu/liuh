@@ -3,7 +3,7 @@
 <mapper namespace="com.cosmo.dao.SysMenuMapper" >
 
   <!--查询所有权限及子下权限-->
-  <select id="sysMenuList" resultMap="sysMenuListMap" parameterType="java.lang.Long">
+  <select id="sysMenuList" resultMap="sysMenuListMap" parameterType="java.lang.String">
     select menu1.id, menu1.title, menu1.url, menu1.pid, menu1.status, menu1.icon, menu1.create_id, menu1.create_time,
     menu2.id id1, menu2.title title1, menu2.url url1, menu2.pid pid1, menu2.status status1, menu2.icon icon1, menu2.create_id create_id, menu2.create_time create_time1
     from sys_menu menu1 left join sys_menu menu2 on menu1.id = menu2.pid
@@ -30,7 +30,7 @@
     </collection>
   </resultMap>
   <!--根据身份id查询权限及子下权限-->
-  <select id="sysRoleMenuList" resultMap="sysMenuListMap" parameterType="java.lang.Long">
+  <select id="sysRoleMenuList" resultMap="sysMenuListMap" parameterType="java.lang.String">
     select menu1.id, menu1.title, menu1.url, menu1.pid, menu1.status, menu1.icon, menu1.create_id, menu1.create_time,
     menu2.id id1, menu2.title title1, menu2.url url1, menu2.pid pid1, menu2.status status1, menu2.icon icon1, menu2.create_id create_id, menu2.create_time create_time1
     from sys_menu menu1 left join sys_menu menu2 on menu1.id = menu2.pid
@@ -38,7 +38,7 @@
   </select>
 
   <!--根据身份id查询子下权限-->
-  <select id="sysMenuListRoleSon" parameterType="java.lang.Long" resultType="com.cosmo.entity.SysMenu">
+  <select id="sysMenuListRoleSon" parameterType="java.lang.String" resultType="com.cosmo.entity.SysMenu">
     select *
     from sys_menu menu
     where menu.pid &lt;&gt; 0 and menu.id in (select menu_id from sys_role_menu where role_id = #{roleId})

@@ -146,7 +146,7 @@ public class ConfigController {
         String value = request.getParameter("value");
         if (StringUtil.isEmpty(value)) new CommonResult(500,"value 为空");
         Config config = new Config();
-        config.setId(Long.valueOf(id));
+        config.setId(id);
         config.setValue(value);
         Integer i = configService.updateById(config);
         if (i>0) return new CommonResult(200,"更新成功成功");

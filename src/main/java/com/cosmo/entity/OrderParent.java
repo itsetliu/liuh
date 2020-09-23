@@ -11,11 +11,11 @@ import java.util.Date;
  */
 @Data
 public class OrderParent {
-    private Long id;
+    private String id;
 
-    private Long orderId;
+    private String orderId;
 
-    private Long userId;
+    private String userId;
 
     private BigDecimal orderPrice;
 

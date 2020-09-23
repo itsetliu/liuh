@@ -49,7 +49,7 @@ public class ArticleController {
     public CommonResult delArticleClassify(HttpServletRequest request){
         String id = request.getParameter("id");
         if (StringUtil.isEmpty(id)) return new CommonResult(500,"id 为空");
-        Integer i = articleService.delArticleClassify(Integer.parseInt(id));
+        Integer i = articleService.delArticleClassify(id);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -132,7 +132,7 @@ public class ArticleController {
     public CommonResult delArticle(HttpServletRequest request){
         String articleId = request.getParameter("articleId");
         if (StringUtil.isEmpty(articleId)) return new CommonResult(500,"articleId 为空");
-        Integer i = articleService.delArticle(Long.valueOf(articleId));
+        Integer i = articleService.delArticle(articleId);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -153,7 +153,7 @@ public class ArticleController {
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         Article article = new Article();
-        article.setClassifyId(Long.valueOf(classifyId));
+        article.setClassifyId(classifyId);
         PageInfo pageInfo = articleService.articleList(Integer.parseInt(pageNum),article,userId);
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
@@ -175,8 +175,8 @@ public class ArticleController {
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         Article article = new Article();
-        article.setUserId(Long.valueOf(userId));
-        article.setClassifyId(Long.valueOf(classifyId));
+        article.setUserId(userId);
+        article.setClassifyId(classifyId);
         PageInfo pageInfo = articleService.articleList(Integer.parseInt(pageNum),article,userId);
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
@@ -195,7 +195,7 @@ public class ArticleController {
         if (StringUtil.isEmpty(classifyId)) return new CommonResult(500,"classifyId 为空");
         String title = request.getParameter("title");
         Article article = new Article();
-        article.setClassifyId(Long.valueOf(classifyId));
+        article.setClassifyId(classifyId);
         article.setTitle("%"+title+"%");
         PageInfo pageInfo = articleService.articleList(Integer.parseInt(pageNum),article,null);
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
@@ -218,9 +218,9 @@ public class ArticleController {
         String info = request.getParameter("info");
         if (StringUtil.isEmpty(info)) return new CommonResult(500,"info 为空");
         Comment comment = new Comment();
-        comment.setUserId(Long.valueOf(userId));
-        comment.setArticleId(Long.valueOf(articleId));
-        comment.setParentId(Long.valueOf(parentId));
+        comment.setUserId(userId);
+        comment.setArticleId(articleId);
+        comment.setParentId(parentId);
         comment.setPraiseNumber(0);
         comment.setInfo(info);
         Integer i = articleService.addComment(comment);
@@ -237,7 +237,7 @@ public class ArticleController {
     public CommonResult delComment(HttpServletRequest request){
         String commentId = request.getParameter("commentId");
         if (StringUtil.isEmpty(commentId)) return new CommonResult(500,"commentId 为空");
-        Integer i = articleService.delComment(Integer.parseInt(commentId));
+        Integer i = articleService.delComment(commentId);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
     }
@@ -256,9 +256,9 @@ public class ArticleController {
         String parentId = request.getParameter("parentId");
         if (StringUtil.isEmpty(parentId)) return new CommonResult(500,"parentId 为空");
         UserPraiseBrowse userPraiseBrowse = new UserPraiseBrowse();
-        userPraiseBrowse.setUserId(Long.valueOf(userId));
+        userPraiseBrowse.setUserId(userId);
         userPraiseBrowse.setType(Integer.parseInt(type));
-        userPraiseBrowse.setParentId(Long.valueOf(parentId));
+        userPraiseBrowse.setParentId(parentId);
         Integer i = articleService.addUserPraiseBrowse(userPraiseBrowse);
         if (i==201) return new CommonResult(201,"已点赞/已浏览");
         else if (i==202) return new CommonResult(201,"type类型错误");
@@ -281,7 +281,7 @@ public class ArticleController {
         if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空");
         String parentId = request.getParameter("parentId");
         if (StringUtil.isEmpty(parentId)) return new CommonResult(500,"parentId 为空");
-        Integer i = articleService.delUserPraiseBrowse(Integer.parseInt(userId),Integer.parseInt(type),Integer.parseInt(parentId));
+        Integer i = articleService.delUserPraiseBrowse(userId,type,parentId);
         if (i==201) return new CommonResult(201,"无该点赞");
         else if (i==202) return new CommonResult(201,"该点赞不存在");
         else if (i>0) return new CommonResult(200,"取消点赞成功");
@@ -327,7 +327,7 @@ public class ArticleController {
         if (StringUtil.isEmpty(articleId)) return new CommonResult(500,"articleId 为空");
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        Map<String,Object> map = articleService.selectArticleMap(Long.valueOf(articleId),Long.valueOf(userId));
+        Map<String,Object> map = articleService.selectArticleMap(articleId,userId);
         if (map!=null) return new CommonResult(200,"查询成功",map);
         return new CommonResult(201,"未查询到结果",null);
     }

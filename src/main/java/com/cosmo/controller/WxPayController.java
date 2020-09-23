@@ -65,7 +65,7 @@ public class WxPayController {
         if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"订单id 为空");
         String type = request.getParameter("type");
         if (StringUtil.isEmpty(type)) return new CommonResult(500,"支付类型 为空");
-        Map<String, String> map = wxPayService.wxPay(Integer.parseInt(userId), Integer.parseInt(orderId),Integer.parseInt(type));
+        Map<String, String> map = wxPayService.wxPay(userId, orderId,Integer.parseInt(type));
         if ("0".equals(type)) return new CommonResult(200,"唤起",map);
         return new CommonResult(200,"唤起",map.get("msg"));
     }
@@ -82,7 +82,7 @@ public class WxPayController {
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         String price = request.getParameter("price");
         if (StringUtil.isEmpty(price)) return new CommonResult(500,"price 为空");
-        Map<String, String> map = wxPayService.balance(Integer.parseInt(userId), price);
+        Map<String, String> map = wxPayService.balance(userId, price);
         return new CommonResult(200,"唤起",map);
     }
 
@@ -99,7 +99,7 @@ public class WxPayController {
         if (StringUtil.isEmpty(userLockId)) return new CommonResult(500,"userLockId 为空");
         String type = request.getParameter("type");
         if (StringUtil.isEmpty(type)) return new CommonResult(500,"支付类型 为空");
-        Map<String, String> map = wxPayService.payLockGuaranteeGold(Integer.parseInt(userLockId),Integer.parseInt(type));
+        Map<String, String> map = wxPayService.payLockGuaranteeGold(userLockId,Integer.parseInt(type));
         if (map.get("code")!=null){
             if ("201".equals(map.get("code"))) return new CommonResult(201,"当前锁价数据id不存在",null);
             else if ("202".equals(map.get("code"))) return new CommonResult(201,"当前锁价数据id不是未支付保证金状态",null);

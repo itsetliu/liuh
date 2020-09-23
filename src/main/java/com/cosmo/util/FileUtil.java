@@ -11,8 +11,8 @@ public class FileUtil {
     /**
      * 文件上传路径
      *///TODO 本地  服务器
-    private static final String filePath = "E:/img/cosmo/";
-//    private static final String filePath = "/root/img/cosmo/";
+//    private static final String filePath = "E:/img/cosmo/";
+    private static final String filePath = "/root/img/cosmo/";
 
     /**
      * 单文件上传

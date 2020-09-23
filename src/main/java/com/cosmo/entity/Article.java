@@ -8,8 +8,8 @@ import lombok.Data;
  */
 @Data
 public class Article {
-    private Long id;
-    private Long userId;
+    private String id;
+    private String userId;
     private Integer browseNumber;
     private Integer praiseNumber;
     private String time;
@@ -18,5 +18,5 @@ public class Article {
     private String infoArray;
     private String imgArray;
     private String video;
-    private Long classifyId;
+    private String classifyId;
 }

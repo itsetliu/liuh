@@ -8,13 +8,13 @@ import lombok.Data;
  */
 @Data
 public class Comment {
-    private Long id;
+    private String id;
 
-    private Long userId;
+    private String userId;
 
-    private Long articleId;
+    private String articleId;
 
-    private Long parentId;
+    private String parentId;
 
     private String parents;
 

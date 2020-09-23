@@ -12,19 +12,19 @@ import java.util.List;
  */
 @Data
 public class SysMenu {
-    private Long id;
+    private String id;
 
     private String title;
 
     private String url;
 
-    private Long pid;
+    private String pid;
 
     private Integer status;
 
     private String icon;
 
-    private Integer createId;
+    private String createId;
 
     private String createTime;
 

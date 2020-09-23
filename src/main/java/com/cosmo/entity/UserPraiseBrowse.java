@@ -8,15 +8,15 @@ import lombok.Data;
  */
 @Data
 public class UserPraiseBrowse {
-    private Long id;
+    private String id;
 
-    private Long userId;
+    private String userId;
 
     private Integer type;
 
-    private Long parentId;
+    private String parentId;
 
-    private Long articleId;
+    private String articleId;
 
 
 }

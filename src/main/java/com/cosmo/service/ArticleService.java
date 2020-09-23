@@ -50,7 +50,7 @@ public class ArticleService {
      * @param articleClassifyId
      * @return
      */
-    public Integer delArticleClassify(Integer articleClassifyId){
+    public Integer delArticleClassify(String articleClassifyId){
         return articleClassifyMapper.deleteById(articleClassifyId);
     }
 
@@ -80,13 +80,13 @@ public class ArticleService {
      */
     public Integer addArticle(Map<String,String> map, MultipartFile video){
         Article article = new Article();
-        article.setUserId(Long.valueOf(map.get("userId")));
+        article.setUserId(map.get("userId"));
         article.setBrowseNumber(0);
         article.setPraiseNumber(0);
         article.setType(Integer.parseInt(map.get("type")));
         article.setTime(sdf.format(new Date()));
         article.setTitle(map.get("title"));
-        article.setClassifyId(Long.valueOf(map.get("classifyId")));
+        article.setClassifyId(map.get("classifyId"));
         if (article.getType()==1){//视频-文字
             if (video==null) return 201;
             article.setVideo(FileUtil.upload(video));
@@ -123,7 +123,7 @@ public class ArticleService {
      * @param articleId
      * @return
      */
-    public Integer delArticle(Long articleId){
+    public Integer delArticle(String articleId){
         Article article = articleMapper.selectArticle(articleId);
         if (article.getType()==1){
             FileUtil.delFile(article.getVideo());
@@ -193,18 +193,18 @@ public class ArticleService {
             parents.add(0);
             comment.setParents(JSON.toJSONString(parents));
         }else {
-            List<Long> parents = JSON.parseArray(comment1.getParents(),Long.class);
+            List<String> parents = JSON.parseArray(comment1.getParents(),String.class);
             parents.add(comment1.getId());
             comment.setParents(JSON.toJSONString(parents));
         }
-        List<Integer> sons = new ArrayList<>();
+        List<String> sons = new ArrayList<>();
         comment.setSons(JSON.toJSONString(sons));
         Integer l = commentMapper.insert(comment);
         if (l<=0) return l;
-        List<Integer> parentIds = JSON.parseArray(comment.getParents(),Integer.class);
+        List<String> parentIds = JSON.parseArray(comment.getParents(),String.class);
         for (int i=1;i<parentIds.size();i++){
             Comment comment2 = commentMapper.selectById(parentIds.get(i));
-            List<Long> sons1 = JSON.parseArray(comment2.getSons(),Long.class);
+            List<String> sons1 = JSON.parseArray(comment2.getSons(),String.class);
             sons1.add(comment.getId());
             comment2.setSons(JSON.toJSONString(sons1));
             this.commentMapper.updateById(comment2);
@@ -217,11 +217,11 @@ public class ArticleService {
      * @param commentId
      * @return
      */
-    public Integer delComment(Integer commentId){
+    public Integer delComment(String commentId){
         Comment comment = commentMapper.selectById(commentId);
         Integer i = commentMapper.deleteById(commentId);
         if (i<=0) return i;
-        List<Integer> sons = JSON.parseArray(comment.getSons(),Integer.class);
+        List<String> sons = JSON.parseArray(comment.getSons(),String.class);
         if (sons.size()>0) sons.forEach(son->{
             this.commentMapper.deleteById(son);
             QueryWrapper<UserPraiseBrowse> userPraiseBrowseQueryWrapper = new QueryWrapper<>();
@@ -287,7 +287,7 @@ public class ArticleService {
      * @param parentId
      * @return
      */
-    public Integer delUserPraiseBrowse(Integer userId,Integer type,Integer parentId){
+    public Integer delUserPraiseBrowse(String userId,String type,String parentId){
         QueryWrapper<UserPraiseBrowse> userPraiseBrowseQueryWrapper = new QueryWrapper<>();
         Map<String,Object> userPraiseBrowseMap = new HashMap<>();
         userPraiseBrowseMap.put("user_id",userId);
@@ -345,7 +345,7 @@ public class ArticleService {
      *      browseExist: 当前用户是否浏览过
      *      praiseExist: 当前用户是否点赞
      */
-    public Map<String,Object> selectArticleMap(Long articleId,Long userId){
+    public Map<String,Object> selectArticleMap(String articleId,String userId){
         Map<String,Object> map = articleMapper.selectArticleMap(articleId);
         if (map==null) return null;
         QueryWrapper<UserPraiseBrowse> userPraiseBrowseQueryWrapper = new QueryWrapper<>();
@@ -358,7 +358,7 @@ public class ArticleService {
         List<UserPraiseBrowse> userPraiseBrowseList = userPraiseBrowseMapper.selectList(userPraiseBrowseQueryWrapper);
         if (userPraiseBrowseList.size()<=0) map.put("praiseExist","false");
         else map.put("praiseExist","true");
-        if (((Long) map.get("userId"))!=userId){
+        if (!userId.equals(map.get("userId"))){
             QueryWrapper<UserPraiseBrowse> userPraiseBrowseQueryWrapper1 = new QueryWrapper<>();
             userPraiseBrowseMap.put("article_id",map.get("id"));
             userPraiseBrowseMap.put("parent_id",map.get("id"));

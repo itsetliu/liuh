@@ -10,11 +10,11 @@ import java.math.BigDecimal;
  */
 @Data
 public class UserMemberModel {
-    private Long id;
+    private String id;
 
-    private Long memberId;
+    private String memberId;
 
-    private Long modelId;
+    private String modelId;
 
     private BigDecimal discount;
 

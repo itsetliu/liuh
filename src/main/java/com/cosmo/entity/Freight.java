@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 public class Freight {
-    private Long id;
+    private String id;
 
     private String hatid;
 

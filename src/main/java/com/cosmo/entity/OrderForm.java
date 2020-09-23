@@ -13,9 +13,9 @@ import java.util.List;
  */
 @Data
 public class OrderForm {
-    private Long id;
+    private String id;
 
-    private Long userId;
+    private String userId;
 
     private String orderNumber;
 
@@ -27,7 +27,7 @@ public class OrderForm {
 
     private String orderWeight;
 
-    private Long invoiceId;
+    private String invoiceId;
 
     private Integer invoiceType;
 
@@ -43,7 +43,7 @@ public class OrderForm {
 
     private Integer orderTotalTrayNumber;
 
-    private Long orderCouponId;
+    private String orderCouponId;
 
     private Integer cashDepositType;
 

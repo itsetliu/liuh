@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Data
 public class SysRole {
-    private Long id;
+    private String id;
 
     private String name;
 
@@ -19,7 +19,7 @@ public class SysRole {
 
     private String remark;
 
-    private Long createdId;
+    private String createdId;
 
     private String createdTime;
 
