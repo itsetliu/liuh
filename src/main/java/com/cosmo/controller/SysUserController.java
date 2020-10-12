@@ -28,6 +28,11 @@ public class SysUserController {
     @Resource
     private SysUserService sysUserService;
 
+    @GetMapping("/logout")
+    public String logout() {
+        return "logout";
+    }
+
     /**
      * 登录方法
      * @param param

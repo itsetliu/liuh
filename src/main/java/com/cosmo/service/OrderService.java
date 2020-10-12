@@ -174,7 +174,14 @@ public class OrderService {
         orderModel.setPipeDia(map.get("pipeDia"));
         orderModel.setCartonWeight(map.get("cartonWeight"));
         orderModel.setCartonType(Integer.parseInt(map.get("cartonType")));
-        if (Integer.parseInt(map.get("cartonType"))==1)orderModel.setCartonInfo(FileUtil.upload(FileUtil.base64ToMultipart(map.get("cartonInfo"))));
+        if (Integer.parseInt(map.get("cartonType"))==1){
+            List<String> cartonInfoList = JSON.parseArray(map.get("cartonInfo"),String.class);
+            List<String> cartonInfos = new ArrayList<>();
+            for (String cartonInfo : cartonInfoList) {
+                cartonInfos.add(FileUtil.upload(FileUtil.base64ToMultipart(cartonInfo)));
+            }
+            orderModel.setCartonInfo(JSON.toJSONString(cartonInfos));
+        }
         orderModel.setCartonPipeNumber(Integer.parseInt(map.get("cartonPipeNumber")));
         orderModel.setCartonNumber(Integer.parseInt(map.get("cartonNumber")));
         orderModel.setCartonPrice(new BigDecimal(map.get("cartonPrice")));
@@ -289,7 +296,7 @@ public class OrderService {
         }//else 地址待定
         i = orderAddressMapper.insert(orderAddress);
         if (i==0) return i;
-        List<Integer> orderModelIds = JSON.parseArray(map.get("orderModelIds"),Integer.class);
+        List<String> orderModelIds = JSON.parseArray(map.get("orderModelIds"),String.class);
         QueryWrapper<OrderModel> orderModelQueryWrapper = new QueryWrapper<>();
         orderModelQueryWrapper.in("id",orderModelIds);
         List<OrderModel> orderModelList = orderModelMapper.selectList(orderModelQueryWrapper);
@@ -770,7 +777,7 @@ public class OrderService {
     public PageInfo orderFormPageList(Integer pageNum,Integer orderStatus,String userId){
         QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
         orderFormQueryWrapper.eq("order_status",orderStatus)
-                .eq("user_id",userId).orderByDesc("id");
+                .eq("user_id",userId).orderByDesc("order_time_create");
         Page page = new Page(pageNum,10);
         IPage<OrderForm> orderFormList = orderFormMapper.selectPage(page,orderFormQueryWrapper);
         PageInfo pageInfo = new PageInfo(orderFormList);
@@ -791,7 +798,7 @@ public class OrderService {
     public List<OrderForm> orderFormList(Integer orderStatus,String userId){
         QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
         orderFormQueryWrapper.eq("order_status",orderStatus)
-                .eq("user_id",userId).orderByDesc("id");
+                .eq("user_id",userId).orderByDesc("order_time_create");
         List<OrderForm> orderFormList = orderFormMapper.selectList(orderFormQueryWrapper);
         for (OrderForm orderForm : orderFormList){
             QueryWrapper<OrderAddress> orderAddressQueryWrapper = new QueryWrapper<>();

@@ -1,21 +1,54 @@
 
 server:
-  port: 8082
+  port: 8081
+#  port: 8082
 
-# 打印sql
-#logging:
-#  level:
-#    com.cosmo.dao : debug
+## 打印sql
+logging:
+  level:
+    com.cosmo.dao : debug
 
 spring:
   mvc:
     dispatch-options-request: true
+  redis:
+    #是否开启redis缓存 true开启 false关闭
+    open: true
+    #Redis服务器地址
+    host: localhost
+#    host: 122.51.51.223
+    #Redis服务器连接端口
+    port: 6379
+    #Redis密码
+    password: root
+#    password: cosmosql2020hwm
+    #Redis数据库索引（默认为0）
+    database: 0
+    jedis:
+      pool:
+        #连接池最大连接数（使用0表示没有限制）
+        max-active: 500
+        #连接池最大阻塞等待时间（使用0表示没有限制）
+        max-wait: 3000
+        #连接池中的最大空闲连接
+        max-idle: 100
+        #连接池中的最小空闲连接
+        min-idle: 50
+        #控制一个pool可分配多少个jedis实例,用来替换上面的redis.maxActive,如果是jedis 2.4以后用该属性
+        maxTotal: 500
+    #连接超时时间（毫秒）
+    timeout: 3000
+    #在空闲时检查有效性, 默认false
+    testWhileIdle: true
+    #是否在从池中取出连接前进行检验,如果检验失败,则从池中去除连接并尝试取出另一个
+    testOnBorrow: true
+
   datasource:
     username: root
-    url: jdbc:mysql://122.51.51.223:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-#    url: jdbc:mysql://localhost:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    password: cosmosql2020hwm
-#    password: root
+#    url: jdbc:mysql://122.51.51.223:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/cosmo1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+#    password: cosmosql2020hwm
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -35,12 +68,7 @@ spring:
       filters: stat
       connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
       use-global-data-source-stat: true
-  redis:
-    shiro:
-      host: localhost
-      port: 6379
-      timeout: 0
-#      password:
+
   servlet:
     multipart:
       enabled: true #是否启用http上传处理
@@ -56,34 +84,6 @@ pdfExport:
   employeeKpiFtlName: pdf_export_employee_kpi.ftl
   employeeKpiFtlUrl: /root/java/pdf
 
-#redis配置
-redis:
-  #是否开启redis缓存 true开启 false关闭
-  open: true
-  #Redis服务器地址
-  host: localhost
-  #Redis服务器连接端口
-  port: 6379
-  #Redis数据库索引（默认为0）
-  database: 0
-  jedis:
-    pool:
-      #连接池最大连接数（使用0表示没有限制）
-      max-active: 500
-      #连接池最大阻塞等待时间（使用0表示没有限制）
-      max-wait: 3000
-      #连接池中的最大空闲连接
-      max-idle: 100
-      #连接池中的最小空闲连接
-      min-idle: 50
-      #控制一个pool可分配多少个jedis实例,用来替换上面的redis.maxActive,如果是jedis 2.4以后用该属性
-      maxTotal: 500
-  #连接超时时间（毫秒）
-  timeout: 3000
-  #在空闲时检查有效性, 默认false
-  testWhileIdle: true
-  #是否在从池中取出连接前进行检验,如果检验失败,则从池中去除连接并尝试取出另一个
-  testOnBorrow: true
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml

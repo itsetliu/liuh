@@ -1,6 +1,5 @@
 package com.cosmo.config;
 
-import com.alibaba.fastjson.JSON;
 import com.cosmo.filter.CORSAuthenticationFilter;
 import com.cosmo.util.MySessionManager;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
@@ -15,7 +14,6 @@ import org.crazycake.shiro.RedisSessionDAO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import javax.servlet.Filter;
 import java.util.LinkedHashMap;
@@ -27,14 +25,14 @@ import java.util.Map;
 @Configuration
 public class ShiroConfig {
 
-    @Value("${spring.redis.shiro.host}")
+    @Value("${spring.redis.host}")
     private String host;
-    @Value("${spring.redis.shiro.port}")
+    @Value("${spring.redis.port}")
     private int port;
-    @Value("${spring.redis.shiro.timeout}")
+    @Value("${spring.redis.timeout}")
     private int timeout;
-    /*@Value("${spring.redis.shiro.password}")
-    private String password;*/
+    @Value("${spring.redis.password}")
+    private String password;
 
     @Bean
     public ShiroFilterFactoryBean shirFilter(SecurityManager securityManager) {
@@ -123,7 +121,7 @@ public class ShiroConfig {
         redisManager.setPort(port);
         redisManager.setExpire(1800);// 配置缓存过期时间 秒
         redisManager.setTimeout(timeout);
-//        redisManager.setPassword(password);
+        redisManager.setPassword(password);
         return redisManager;
     }
 

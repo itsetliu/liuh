@@ -115,7 +115,7 @@ public class ArticleService {
             article.setImgArray(JSON.toJSONString(imgArray1));
             article.setInfoArray(map.get("infoArray"));
         }
-        return articleMapper.addArticle(article);
+        return articleMapper.insert(article);
     }
 
     /**
@@ -159,7 +159,7 @@ public class ArticleService {
                 userPraiseBrowseMap.put("parent_id",String.valueOf(articleMap.get("id")));
                 userPraiseBrowseMap.put("user_id",userId);
                 userPraiseBrowseMap.put("type","1");
-                userPraiseBrowseQueryWrapper.allEq(userPraiseBrowseMap,false);
+                userPraiseBrowseQueryWrapper.allEq(userPraiseBrowseMap,false).orderByDesc("time");
                 List<UserPraiseBrowse> userPraiseBrowseList = userPraiseBrowseMapper.selectList(userPraiseBrowseQueryWrapper);
                 if (userPraiseBrowseList.size()<=0) articleMap.put("praiseExist","false");
                 else articleMap.put("praiseExist","true");
@@ -169,7 +169,7 @@ public class ArticleService {
                     userPraiseBrowseMap.put("parent_id",String.valueOf(articleMap.get("id")));
                     userPraiseBrowseMap.put("user_id",userId);
                     userPraiseBrowseMap.put("type","3");
-                    userPraiseBrowseQueryWrapper1.allEq(userPraiseBrowseMap,false);
+                    userPraiseBrowseQueryWrapper1.allEq(userPraiseBrowseMap,false).orderByDesc("time");
                     List<UserPraiseBrowse> userPraiseBrowseList1 = userPraiseBrowseMapper.selectList(userPraiseBrowseQueryWrapper1);
                     if (userPraiseBrowseList1.size()<=0) articleMap.put("browseExist","false");
                     else articleMap.put("browseExist","true");
@@ -253,7 +253,7 @@ public class ArticleService {
             Article article = articleMapper.selectArticle(userPraiseBrowse.getParentId());
             if (article==null) return 203;
             article.setPraiseNumber(article.getPraiseNumber()+1);
-            this.articleMapper.updateArticle(article);
+            this.articleMapper.updateById(article);
             userPraiseBrowse.setArticleId(userPraiseBrowse.getParentId());
         }else if (userPraiseBrowse.getType()==2){//评论点赞
             Comment comment = commentMapper.selectById(userPraiseBrowse.getParentId());
@@ -265,7 +265,7 @@ public class ArticleService {
             Article article = articleMapper.selectArticle(userPraiseBrowse.getParentId());
             if (article==null) return 203;
             article.setBrowseNumber(article.getBrowseNumber()+1);
-            this.articleMapper.updateArticle(article);
+            this.articleMapper.updateById(article);
             userPraiseBrowse.setArticleId(userPraiseBrowse.getParentId());
             //浏览量增加时增加佣金金币
             QueryWrapper<Config> configQueryWrapper = new QueryWrapper<>();
@@ -300,7 +300,7 @@ public class ArticleService {
         if (userPraiseBrowse.getType()==1){//取消文章点赞
             Article article = articleMapper.selectArticle(userPraiseBrowse.getParentId());
             article.setPraiseNumber(article.getPraiseNumber()-1);
-            this.articleMapper.updateArticle(article);
+            this.articleMapper.updateById(article);
         }else if (userPraiseBrowse.getType()==2){//取消评论点赞
             Comment comment = commentMapper.selectById(userPraiseBrowse.getParentId());
             comment.setPraiseNumber(comment.getPraiseNumber()-1);

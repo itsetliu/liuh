@@ -91,18 +91,19 @@ public class ModelService {
      * @param modelThicknesss
      * @return
      */
+    @Transactional(value="txManager1")
     public Integer addModelThickness(String modelId,String modelThicknesss){
         List<String> modelThickness = JSON.parseArray(modelThicknesss,String.class);
-        List<Map<String,String>> mapList = new ArrayList<>();
+        Integer i = 0;
         for (String modelThicknes : modelThickness){
             String[] s=modelThicknes.split("-");
-            Map<String,String> map1 = new HashMap();
-            map1.put("modelId",modelId);
-            map1.put("thickness",s[0]);
-            map1.put("processCost",s[1]);
-            mapList.add(map1);
+            ModelThickness modelThickness1 = new ModelThickness();
+            modelThickness1.setModelId(modelId);
+            modelThickness1.setThickness(s[0]);
+            modelThickness1.setProcessCost(new BigDecimal(s[1]));
+            i = i + modelThicknessMapper.insert(modelThickness1);
         }
-        return modelThicknessMapper.addModelThickness(mapList);
+        return i;
     }
 
     /**
@@ -122,16 +123,17 @@ public class ModelService {
      * @param modelSuttles
      * @return
      */
+    @Transactional(value="txManager1")
     public Integer addModelSuttles(String modelId,String modelSuttles){
         List<String> modelThickness = JSON.parseArray(modelSuttles,String.class);
-        List<Map<String,String>> mapList = new ArrayList<>();
+        Integer i = 0;
         for (String modelSuttle : modelThickness){
-            Map<String,String> map1 = new HashMap();
-            map1.put("modelId",modelId);
-            map1.put("suttle",modelSuttle);
-            mapList.add(map1);
+            ModelSuttle modelSuttle1 = new ModelSuttle();
+            modelSuttle1.setModelId(modelId);
+            modelSuttle1.setSuttle(modelSuttle);
+            i = i + modelSuttleMapper.insert(modelSuttle1);
         }
-        return modelSuttleMapper.addModelSuttles(mapList);
+        return i;
     }
 
     /**
@@ -144,10 +146,13 @@ public class ModelService {
      */
     @Transactional(value="txManager1")
     public Integer addModel(Map<String,String> map){
+        QueryWrapper<Config> configQueryWrapper = new QueryWrapper<>();
+        configQueryWrapper.eq("code","LLDPEPrice").eq("type",0);
+        List<Config> configs = configMapper.selectList(configQueryWrapper);
         Config config = new Config();
         config.setCode("LLDPE");
         config.setName(map.get("name"));
-        config.setValue(map.get("price"));
+        config.setValue(configs.get(0).getValue());
         config.setType(0);
         Integer i = configMapper.insert(config);
         if (i<=0) return i;
@@ -159,9 +164,10 @@ public class ModelService {
         model.setConfigId(config.getId());
         i = modelMapper.insert(model);
         if (i<=0) return i;
-        i = this.addModelThickness(model.getId().toString(),map.get("modelThickness"));
-        if (i<=0) return i;
-        return this.addModelSuttles(model.getId().toString(),map.get("modelSuttles"));
+        return this.addModelThickness(model.getId().toString(),map.get("modelThickness"));
+//        i = this.addModelThickness(model.getId().toString(),map.get("modelThickness"));
+//        if (i<=0) return i;
+//        return this.addModelSuttles(model.getId().toString(),map.get("modelSuttles"));
     }
 
     /**
@@ -219,14 +225,15 @@ public class ModelService {
         if (i<=0) return i;
         Config config = configMapper.selectById(model.getConfigId());
         if (!StringUtil.isEmpty(map.get("name"))) config.setName(map.get("name"));
-        if (!StringUtil.isEmpty(map.get("price"))) config.setValue(map.get("price"));
+//        if (!StringUtil.isEmpty(map.get("price"))) config.setValue(map.get("price"));
         i = configMapper.updateById(config);
         if (i<=0) return i;
         this.delModelThickness(model.getId());
-        i = this.addModelThickness(model.getId().toString(),map.get("modelThickness"));
-        if (i<=0) return i;
-        this.delModelSuttles(model.getId());
-        return this.addModelSuttles(model.getId().toString(),map.get("modelSuttles"));
+        return this.addModelThickness(model.getId().toString(),map.get("modelThickness"));
+//        i = this.addModelThickness(model.getId().toString(),map.get("modelThickness"));
+//        if (i<=0) return i;
+//        this.delModelSuttles(model.getId());
+//        return this.addModelSuttles(model.getId().toString(),map.get("modelSuttles"));
     }
 
     /**

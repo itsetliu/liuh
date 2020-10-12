@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -31,9 +32,11 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
     @Resource
     private OrderFormMapper orderFormMapper;
     @Resource
-    private CouponMapper couponMapper;
+    private OrderAddressMapper orderAddressMapper;
     @Resource
     private OrderModelMapper orderModelMapper;
+    @Resource
+    private CouponMapper couponMapper;
     @Resource
     private UserLockMapper userLockMapper;
 
@@ -55,14 +58,38 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
                 if ("intentionGold".equals(strs[0])){
                     QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
                     orderFormQueryWrapper.eq("order_number",strs[1]).eq("order_status",0);
+                    OrderForm orderForm = orderFormMapper.selectOne(orderFormQueryWrapper);
                     orderFormMapper.delete(orderFormQueryWrapper);
+                    QueryWrapper<OrderAddress> orderAddressQueryWrapper = new QueryWrapper<>();
+                    orderAddressQueryWrapper.eq("order_id",orderForm.getId());
+                    List<OrderAddress> orderAddresseList = orderAddressMapper.selectList(orderAddressQueryWrapper);
+                    orderAddressMapper.delete(orderAddressQueryWrapper);
+                    QueryWrapper<OrderModel> orderModelQueryWrapper1 = new QueryWrapper<>();
+                    orderModelQueryWrapper1.eq("order_id",orderForm.getId()).eq("order_model_status",1);
+                    List<OrderModel> orderModelList = orderModelMapper.selectList(orderModelQueryWrapper1);
+                    orderModelMapper.delete(orderModelQueryWrapper1);
+                    QueryWrapper<OrderModel> orderModelQueryWrapper2 = new QueryWrapper<>();
+                    List<String> orderAddressIdList = new ArrayList<>();
+                    orderAddresseList.forEach(orderAddresse->{
+                        orderAddressIdList.add(orderAddresse.getId());
+                    });
+                    orderModelQueryWrapper2.in("order_id",orderAddressIdList).eq("order_model_status",2);
+                    orderModelMapper.delete(orderModelQueryWrapper2);
+                    orderModelList.forEach(orderModel -> {
+                        if (orderModel.getLabelType()==1) FileUtil.delFile(orderModel.getLabelInfo());
+                        if (orderModel.getCartonType()==1){
+                            List<String> cartonInfoList = JSON.parseArray(orderModel.getCartonInfo(),String.class);
+                            cartonInfoList.forEach(cartonInfo->{
+                                FileUtil.delFile(cartonInfo);
+                            });
+                        }
+                    });
                     System.err.println("删除的订单号是: " + strs[1]);
                 } else if ("orderCode".equals(strs[0])){
                     QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
                     orderFormQueryWrapper.eq("order_number",strs[1]).eq("order_status",1);
-                    List<OrderForm> orderForms = orderFormMapper.selectList(orderFormQueryWrapper);
-                    if (orderForms.size()>0){
-                        OrderForm orderForm = orderForms.get(0);
+                    OrderForm orderForm = orderFormMapper.selectOne(orderFormQueryWrapper);
+                    if (orderForm!=null){
                         orderForm.setOrderStatus(4);
                         orderFormMapper.updateById(orderForm);
                         System.err.println("过期的订单号是: " + strs[1]);
@@ -78,16 +105,21 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
                         System.err.println("过期的红包是: " + strs[1]);
                     }
                 }else if ("shopTrolley".equals(strs[0])){
-                    OrderModel orderModel = orderModelMapper.selectById(Integer.parseInt(strs[1]));
+                    OrderModel orderModel = orderModelMapper.selectById(strs[1]);
                     if (orderModel.getLabelType()==1) FileUtil.delFile(orderModel.getLabelInfo());
-                    if (orderModel.getCartonType()==1)FileUtil.delFile(orderModel.getCartonInfo());
-                    orderModelMapper.deleteById(Integer.parseInt(strs[1]));
+                    if (orderModel.getCartonType()==1){
+                        List<String> cartonInfoList = JSON.parseArray(orderModel.getCartonInfo(),String.class);
+                        cartonInfoList.forEach(cartonInfo->{
+                            FileUtil.delFile(cartonInfo);
+                        });
+                    }
+                    orderModelMapper.deleteById(strs[1]);
                     System.err.println("过期的购物车订单是: " + strs[1]);
                 }else if ("lockPrice1".equals(strs[0])){
-                    userLockMapper.deleteById(Integer.parseInt(strs[1]));
+                    userLockMapper.deleteById(strs[1]);
                     System.err.println("删除的锁价数据是: " + strs[1]);
                 }else if ("lockPrice2".equals(strs[0])){
-                    UserLock userLock = userLockMapper.selectById(Integer.parseInt(strs[1]));
+                    UserLock userLock = userLockMapper.selectById(strs[1]);
                     userLock.setStatus(0);
                     userLockMapper.updateById(userLock);
                     System.err.println("过期的锁价数据是: " + strs[1]);

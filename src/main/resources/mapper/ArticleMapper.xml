@@ -19,30 +19,30 @@
 <insert id="addArticle" parameterType="com.cosmo.entity.Article">
     insert into article
     <trim prefix="(" suffix=")" suffixOverrides="," >
-      <if test="id != null" >id,</if>
-      <if test="userId != null" >user_id,</if>
-      <if test="browseNumber != null" >browse_number,</if>
-      <if test="praiseNumber != null" >praise_number,</if>
-      <if test="time != null" >time,</if>
-      <if test="type != null" >type,</if>
-      <if test="title != null" >title,</if>
-      <if test="infoArray != null" >info_array,</if>
-      <if test="imgArray != null" >img_array,</if>
-      <if test="video != null" >video,</if>
-      <if test="classifyId != null" >classify_id,</if>
+      <if test="article.id != null" >id,</if>
+      <if test="article.userId != null" >user_id,</if>
+      <if test="article.browseNumber != null" >browse_number,</if>
+      <if test="article.praiseNumber != null" >praise_number,</if>
+      <if test="article.time != null" >time,</if>
+      <if test="article.type != null" >type,</if>
+      <if test="article.title != null" >title,</if>
+      <if test="article.infoArray != null" >info_array,</if>
+      <if test="article.imgArray != null" >img_array,</if>
+      <if test="article.video != null" >video,</if>
+      <if test="article.classifyId != null" >classify_id,</if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
-      <if test="id != null" >#{article.id},</if>
-      <if test="userId != null" >#{article.userId},</if>
-      <if test="browseNumber != null" >#{article.browseNumber},</if>
-      <if test="praiseNumber != null" >#{article.praiseNumber},</if>
-      <if test="time != null" >#{article.time},</if>
-      <if test="type != null" >#{article.type},</if>
-      <if test="title != null" >#{article.title},</if>
-      <if test="infoArray != null" >#{article.infoArray},</if>
-      <if test="imgArray != null" >#{article.imgArray},</if>
-      <if test="video != null" >#{article.video},</if>
-      <if test="classifyId != null" >#{article.classifyId},</if>
+      <if test="article.id != null" >#{article.id},</if>
+      <if test="article.userId != null" >#{article.userId},</if>
+      <if test="article.browseNumber != null" >#{article.browseNumber},</if>
+      <if test="article.praiseNumber != null" >#{article.praiseNumber},</if>
+      <if test="article.time != null" >#{article.time},</if>
+      <if test="article.type != null" >#{article.type},</if>
+      <if test="article.title != null" >#{article.title},</if>
+      <if test="article.infoArray != null" >#{article.infoArray},</if>
+      <if test="article.imgArray != null" >#{article.imgArray},</if>
+      <if test="article.video != null" >#{article.video},</if>
+      <if test="article.classifyId != null" >#{article.classifyId},</if>
     </trim>
 </insert>
 <select id="selectArticle" resultMap="BaseResultMap" parameterType="java.lang.String">
@@ -63,23 +63,23 @@
     where 1=1 <if test="article.classifyId != null" >and a.classify_id = #{article.classifyId}</if>
     <if test="article.userId != null" >and a.user_id = #{article.userId}</if>
     <if test="article.title != null" ><if test="article.title != '%%'" >and a.title like #{article.title}</if></if>
-    order by a.id desc
+    order by a.time desc
 </select>
 <update id="updateArticle" parameterType="com.cosmo.entity.Article">
     update article
     <set >
-      <if test="userId != null" >user_id=#{userId},</if>
-      <if test="browseNumber != null" >browse_number=#{browseNumber},</if>
-      <if test="praiseNumber != null" >praise_number=#{praiseNumber},</if>
-      <if test="time != null" >time=#{time},</if>
-      <if test="type != null" >type=#{type},</if>
-      <if test="title != null" >title=#{title},</if>
-      <if test="infoArray != null" >info_array=#{infoArray},</if>
-      <if test="imgArray != null" >img_array=#{imgArray},</if>
-      <if test="video != null" >video=#{video},</if>
-      <if test="classifyId != null" >classify_id=#{classifyId},</if>
+      <if test="article.userId != null" >user_id=#{article.userId},</if>
+      <if test="article.browseNumber != null" >browse_number=#{article.browseNumber},</if>
+      <if test="article.praiseNumber != null" >praise_number=#{article.praiseNumber},</if>
+      <if test="article.time != null" >time=#{article.time},</if>
+      <if test="article.type != null" >type=#{article.type},</if>
+      <if test="article.title != null" >title=#{article.title},</if>
+      <if test="article.infoArray != null" >info_array=#{article.infoArray},</if>
+      <if test="article.imgArray != null" >img_array=#{article.imgArray},</if>
+      <if test="article.video != null" >video=#{article.video},</if>
+      <if test="article.classifyId != null" >classify_id=#{article.classifyId},</if>
     </set>
-    where id = #{id}
+    where id = #{article.id}
 </update>
 <select id="commentList" resultType="java.util.Map" parameterType="java.util.HashMap">
     select c.id, u.id user_id, u.wx_name, c.article_id, c.parent_id, c.parents, c.sons, c.praise_number, date_format(c.time,'%Y-%c-%d %h:%i:%s') AS time, c.info

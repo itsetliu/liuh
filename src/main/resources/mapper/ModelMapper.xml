@@ -8,7 +8,7 @@
     from model m left join model_thickness mt on m.id = mt.model_id
     left join model_suttle ms on m.id = ms.model_id
     left join config c on m.config_id = c.id
-    where m.type = #{type}
+    where m.type = #{type} order by mt.thickness+0
   </select>
   <resultMap id="selectModelMap" type="com.cosmo.entity.Model" >
     <id column="id" property="id" jdbcType="INTEGER" />

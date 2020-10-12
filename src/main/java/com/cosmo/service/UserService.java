@@ -495,7 +495,7 @@ public class UserService {
      */
     public PageInfo userPriceList(Integer pageNum,String userId){
         QueryWrapper<UserPriceInfo> userPriceInfoQueryWrapper = new QueryWrapper<>();
-        userPriceInfoQueryWrapper.eq("user_id",userId).orderByDesc("id");
+        userPriceInfoQueryWrapper.eq("user_id",userId).orderByDesc("time");
         Page page = new Page(pageNum,10);
         IPage<UserPriceInfo> userPriceInfoList = userPriceInfoMapper.selectPage(page,userPriceInfoQueryWrapper);
         PageInfo pageInfo = new PageInfo(userPriceInfoList);
@@ -829,9 +829,11 @@ public class UserService {
     public Integer updateUserInfo(Map<String,String> userInfoMap){
         UserInfo userInfo = userInfoMapper.selectById(userInfoMap.get("userId"));
         if (userInfo==null) return 201;//该用户不存在
-        UserMember userMember = userMemberMapper.selectById(userInfoMap.get("memberId"));
-        if (userMember==null) return 202;//该会员类型不存在
-        userInfo.setMemberId(userMember.getId());
+        if (!"0".equals(userInfoMap.get("memberId"))){
+            UserMember userMember = userMemberMapper.selectById(userInfoMap.get("memberId"));
+            if (userMember==null) return 202;//该会员类型不存在
+            userInfo.setMemberId(userMember.getId());
+        }else userInfo.setMemberId("0");
         userInfo.setPrice(new BigDecimal(userInfoMap.get("price")));
         userInfo.setGoldCoin(Integer.parseInt(userInfoMap.get("goldCoin")));
         QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
