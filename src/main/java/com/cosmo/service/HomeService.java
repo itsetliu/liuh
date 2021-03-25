@@ -3,10 +3,7 @@ package com.cosmo.service;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.cosmo.dao.HomeAdvertisingMapper;
-import com.cosmo.dao.HomeCommodityMapper;
-import com.cosmo.dao.HomeProductMapper;
-import com.cosmo.dao.HomeTitleMapper;
+import com.cosmo.dao.*;
 import com.cosmo.entity.HomeAdvertising;
 import com.cosmo.entity.HomeCommodity;
 import com.cosmo.entity.HomeProduct;
@@ -14,6 +11,7 @@ import com.cosmo.entity.HomeTitle;
 import com.cosmo.util.FileUtil;
 import com.cosmo.util.PageInfo;
 import com.cosmo.util.StringUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,19 +22,65 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+/**
+ * @Author: Mr.liu
+ * @Data : 2021/3/22 10:03
+ */
 @Service
 public class HomeService {
-    @Resource
-    private HomeAdvertisingMapper homeAdvertisingMapper;
-    @Resource
-    private HomeCommodityMapper homeCommodityMapper;
-    @Resource
-    private HomeProductMapper homeProductMapper;
-    @Resource
+    @Autowired(required=false)
+    private HomeMapper  homeMapper;
+
+    @Autowired(required=false)
     private HomeTitleMapper homeTitleMapper;
 
+    @Autowired(required=false)
+    private HomeProductMapper homeCommodity;
+
+    @Autowired(required=false)
+    private HomeCommodityMapper  homeCommodityMapper;
+
+    @Resource
+    private HomeAdvertisingMapper homeAdvertisingMapper;
+
+    @Resource
+    private HomeProductMapper homeProductMapper;
+
+
+    /*首页图片轮播广告*/
+         public Object HomepagePictures(){
+             QueryWrapper wrapper=new QueryWrapper();
+             wrapper.eq("1", 1);
+             Object obj=homeMapper.selectList(wrapper);
+             return obj;
+         }
+
+        /*首页图片轮播广告*/
+        public Object Homeheadline(){
+            QueryWrapper wrapper=new QueryWrapper();
+            wrapper.eq("1", 1);
+            Object obj=homeTitleMapper.selectList(wrapper);
+            return obj;
+        }
+
+        /*首页商品*/
+        public Page<Map<String, Object>> Homecommodity(String titleId,String pageSum){
+            QueryWrapper wrapper=new QueryWrapper();
+            wrapper.eq("homeTitleId", titleId);
+            Page<Map<String, Object>> page=new Page<Map<String, Object>>(Long.parseLong(pageSum),10);
+            Page pages=homeCommodity.selectMapsPage(page,wrapper);
+            return pages;
+        }
+
+        /*商品详情*/
+        public Object Homedatails(String homeProductId ){
+            QueryWrapper wrapper=new QueryWrapper();
+            wrapper.eq("homeProductId", homeProductId);
+            wrapper.orderBy(true,true,"model");
+            Object obj=homeCommodityMapper.selectList(wrapper);
+            return obj;
+        }
 
     /**
      * 新增首页广告
@@ -373,5 +417,4 @@ public class HomeService {
         homeProductMapper.updateById(homeProduct);
         return homeCommodityMapper.deleteById(id);
     }*/
-
 }
