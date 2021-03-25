@@ -185,10 +185,9 @@ public class OrderController {
         map.put("modelUnitPrice",modelUnitPrice);map.put("modelTotalPrice",modelTotalPrice);map.put("modelProcessCost",modelProcessCost);
         map.put("modelRawPrice",modelRawPrice);map.put("modelRawPriceType",modelRawPriceType);
         map.put("memberId",memberId);map.put("memberDiscount",memberDiscount);
-        Map<String, String> map1 = orderService.addOrderModel(map);
-        Map<String, String> map2 = new HashMap();
-        map2.put("orderModelId",map1.get("orderModelId"));
-        if (Integer.parseInt(map1.get("i"))>0) return new CommonResult(200,"新增成功",map2);
+        String i = orderService.addOrderModel(map);
+
+        if (i.length()>0) return new CommonResult(200,"新增成功",i);
         return new CommonResult(201,"新增失败");
     }
 
@@ -263,6 +262,7 @@ public class OrderController {
         map.put("userId",userId);map.put("orderRemark",orderRemark);map.put("rawPriceType",rawPriceType);
         map.put("orderModelIds",orderModelIds);map.put("orderAddressStatus",orderAddressStatus);
         Integer i = 0;
+        Map data=new HashMap();
         if ("2".equals(rawPriceType)) {
             i = orderService.createOrderForm1(map);
             if (i==205) return new CommonResult(201,"待付款的锁价订单同时只可存在一个");
@@ -274,12 +274,13 @@ public class OrderController {
             else if (i==207) return new CommonResult(201,"该地址暂无运费信息，无法生成订单");
         }
         else {
-            i = orderService.createOrderForm(map);
+            data = orderService.createOrderForm(map);
+            i=Integer.parseInt(data.get("data").toString());
             if (i==201) return new CommonResult(201,"会员预存余额不足支付本次交易，请续费会员或调整购物车后生成订单");
             else if (i==202) return new CommonResult(201,"用户没有默认采购方信息");
             else if (i==203) return new CommonResult(201,"该地址暂无运费信息，无法生成订单");
         }
-        if (i>0) return new CommonResult(200,"合并成功");
+        if (i>0) return new CommonResult(200,"合并成功",data.get("id"));
         return new CommonResult(201,"合并失败");
     }
 

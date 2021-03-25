@@ -1,0 +1,8 @@
+  #appid
+  appId: wxef030d1170877ab1
+  #appSecret
+  appSecret: a4ae8ae1763887c496da4adbf4f8622d
+  #商户id
+  mchId: 1587411501
+  #商户秘钥
+  mchKey: 7da710de87674939a29d74dcac2cuadf

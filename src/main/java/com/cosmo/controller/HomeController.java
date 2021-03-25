@@ -1,7 +1,6 @@
 package com.cosmo.controller;
 
-import com.cosmo.dao.CommentMapper;
-import com.cosmo.entity.HomeCommodity;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cosmo.entity.HomeProduct;
 import com.cosmo.entity.HomeTitle;
 import com.cosmo.service.HomeService;
@@ -16,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -244,6 +243,45 @@ public class HomeController {
         return new CommonResult(201,"更新失败");
     }
 
+
+    /*首页图片轮播广告*/
+    @GetMapping("/app/homePageDisplay/arrayImg")
+    public CommonResult  HomepagePictures(){
+        Object object=homeService.HomepagePictures();
+        return ((Collection) object).isEmpty()?new CommonResult(201,"暂无数据~",null)
+                :new CommonResult(200,"查询成功",object);
+    }
+
+    /*查询商品对应的标题*/
+    @GetMapping("/app/homePageDisplay/headline")
+    public CommonResult Homeheadline(){
+        Object object = homeService.Homeheadline();
+        return ((Collection) object).isEmpty()?new CommonResult(201,"暂无数据~",null)
+                :new CommonResult(200,"查询成功",object);
+    }
+
+    /*查询商品*/
+    @GetMapping("/app/homePageDisplay/commodity")
+    public CommonResult Homecommodity(HttpServletRequest request){
+        String titleId=request.getParameter("titleId");
+        String pageSum=request.getParameter("pageSum");
+        if(StringUtil.isEmpty(titleId)){return new CommonResult(500,"titleId为空~");}
+        if(StringUtil.isEmpty(pageSum)){return new CommonResult(500,"pageSum为空~");}
+        Page page=homeService.Homecommodity(titleId,pageSum);
+        return  page.getTotal()==0?new CommonResult(201,"暂无数据~",null):new CommonResult(200,"查询成功",page);
+    }
+
+    /*查询商品详情*/
+    @GetMapping("/app/homePageDisplay/datails")
+    public CommonResult Homedatails(HttpServletRequest request){
+        String commodityId=request.getParameter("commodityId");
+        if(StringUtil.isEmpty(commodityId)){return new CommonResult(500,"commodityId为空~");}
+        Object object = homeService.Homedatails(commodityId);
+        return ((Collection) object).isEmpty()?new CommonResult(201,"暂无数据~",null)
+                :new CommonResult(200,"查询成功",object);
+
+    }
+
     /**
      * 新增首页商品配置
      * @param request
@@ -326,3 +364,5 @@ public class HomeController {
     }*/
 
 }
+
+

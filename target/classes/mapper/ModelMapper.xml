@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cosmo.dao.ModelMapper" >
+
+  <!--多表连接查询model-->
+  <select id="selectModel" resultMap="selectModelMap" parameterType="java.lang.String">
+    select m.id, m.type, m.`name`, m.type_name, c.`value` price, mt.thickness mtthickness, mt.process_cost, mt.status, ms.suttle
+    from model m left join model_thickness mt on m.id = mt.model_id
+    left join model_suttle ms on m.id = ms.model_id
+    left join config c on m.config_id = c.id
+    where m.type = #{type} order by mt.thickness+0
+  </select>
+  <resultMap id="selectModelMap" type="com.cosmo.entity.Model" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="type" property="type" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="price" property="price" jdbcType="VARCHAR" />
+    <result column="type_name" property="typeName" jdbcType="VARCHAR" />
+    <collection property="modelThicknessList" ofType="com.cosmo.entity.ModelThickness">
+      <result column="mtthickness" property="thickness" jdbcType="VARCHAR" />
+      <result column="process_cost" property="processCost" jdbcType="VARCHAR" />
+      <result column="status" property="status" jdbcType="VARCHAR" />
+    </collection>
+    <collection property="modelSuttleList" ofType="com.cosmo.entity.ModelSuttle">
+      <result column="suttle" property="suttle" jdbcType="VARCHAR" />
+    </collection>
+  </resultMap>
+
+</mapper>

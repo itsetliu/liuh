@@ -453,7 +453,7 @@ public class OrderService {
      * @param map
      * @return
      */
-    public Map<String, String> addOrderModel(Map<String,String> map){
+    public String addOrderModel(Map<String,String> map){
         BigDecimal boxWeigth = new BigDecimal(this.getConfigValue("boxWeigth"));
         BigDecimal trayWeigth = new BigDecimal(this.getConfigValue("trayWeigth"));
         OrderModel orderModel = new OrderModel();
@@ -527,10 +527,7 @@ public class OrderService {
 //        redisUtil.expire("shopTrolley,"+orderModel.getId(),shopTrolleyTime, TimeUnit.SECONDS);
         orderModel.setAgoModelTotalPrice(orderModel.getModelTotalPrice());
         Integer i = orderModelMapper.insert(orderModel);
-        Map<String, String> map1 = new HashMap();
-        map1.put("i",i.toString());
-        map1.put("orderModelId",orderModel.getId());
-        return map1;
+        return orderModel.getId();
     }
 
     /**
@@ -577,15 +574,17 @@ public class OrderService {
      *  203:该地址暂无运费信息，无法生成订单
      */
     @Transactional(value="txManager1")
-    public Integer createOrderForm(Map<String,String> map){
+    public Map createOrderForm(Map<String,String> map){
+        Map rel=new HashMap();
         UserInfo userInfo = userInfoMapper.selectById(map.get("userId"));
         Integer i = 0;
         List<UserPurchaser> userPurchaserList = userPurchaserMapper.selectList(new QueryWrapper<UserPurchaser>().eq("user_id", map.get("userId")).eq("status", 0));
         if(userPurchaserList.size()<=0){
-            return 202;//用户没有默认采购方信息
+            rel.put("data","202");
+            return rel;//用户没有默认采购方信息
         }
         UserPurchaser userPurchaser = userPurchaserList.get(0);
-        if (userPurchaser==null) return 202;//用户没有默认采购方信息
+        if (userPurchaser==null){rel.put("data","202"); return rel;}//用户没有默认采购方信息
         //初步新建合同订单获取orderFormId
         OrderForm orderForm = new OrderForm();
         orderForm.setUserId(userInfo.getId());
@@ -609,7 +608,7 @@ public class OrderService {
         orderForm.setOrderTimeCreate(new Date());
         orderForm.setCashDepositType(0);
         i = orderFormMapper.insert(orderForm);
-        if (i==0) return i;
+        if (i==0){rel.put("data",i); return rel;}
         List<Config> configList = configMapper.selectList(new QueryWrapper<Config>().eq("code", "LLDPEPrice").eq("type", 0));
         Config config = configList.get(0);
         List<Map<String, String>> list = JSON.parseObject(config.getValue(), ArrayList.class);
@@ -636,7 +635,7 @@ public class OrderService {
             }
         }//else 地址待定
         i = orderAddressMapper.insert(orderAddress);
-        if (i==0) return i;
+        if (i==0) {rel.put("data",i); return rel;}
         List<String> orderModelIds = JSON.parseArray(map.get("orderModelIds"),String.class);
         QueryWrapper<OrderModel> orderModelQueryWrapper = new QueryWrapper<>();
         orderModelQueryWrapper.in("id",orderModelIds);
@@ -644,27 +643,18 @@ public class OrderService {
         BigDecimal[] orderAddressRoughWeight = {new BigDecimal(0)};
         BigDecimal[] modelTotalPrice = {new BigDecimal(0)};
         int[] trayNumber = {0};
-        boolean[] is = {false};
         orderModelList.forEach(orderModels -> {
             if (orderModels.getMemberId()!=userInfo.getMemberId()){
                 orderModels.setMemberId(userInfo.getMemberId());
-                // 判断是否是首页商城的订单
-                if (orderModels.getModelRawPriceType()==3){
+                //判断用户是否有会员
+                if ("0".equals(userInfo.getMemberId())){
                     orderModels.setMemberDiscount(new BigDecimal(0));
-                    if (is[0] ==false){
-                        is[0] = true;
-                    }
                 }else {
-                    //判断用户是否有会员
-                    if ("0".equals(userInfo.getMemberId())){
-                        orderModels.setMemberDiscount(new BigDecimal(0));
-                    }else {
-                        Map<String,String> map1 = new HashMap<>();
-                        map1.put("memberId",userInfo.getMemberId().toString());map1.put("modelName",orderModels.getModelName());
-                        UserMemberModel userMemberModel1 = userMemberModelMapper.selectUserMemberMap(map1);
-                        BigDecimal discount = userMemberModel1.getDiscount();
-                        orderModels.setMemberDiscount(discount);
-                    }
+                    Map<String,String> map1 = new HashMap<>();
+                    map1.put("memberId",userInfo.getMemberId().toString());map1.put("modelName",orderModels.getModelName());
+                    UserMemberModel userMemberModel1 = userMemberModelMapper.selectUserMemberMap(map1);
+                    BigDecimal discount = userMemberModel1.getDiscount();
+                    orderModels.setMemberDiscount(discount);
                 }
                 BigDecimal modelTotalPrice1 = orderModels.getModelUnitPrice().subtract(orderModels.getMemberDiscount()).multiply(new BigDecimal(orderModels.getModelTotalSuttle()));
                 if (orderModels.getTrayType()==0){
@@ -687,7 +677,8 @@ public class OrderService {
             String freights = freightMapper.value(cityId);
             List<String> freightList = JSONObject.parseArray(freights,String.class);
             if (freightList.size()<=0||freightList==null){
-                return 203;//该地址暂无运费信息，无法生成订单
+                rel.put("data","203");
+                return rel;//该地址暂无运费信息，无法生成订单
             }
             String freightPrice = null;
             for (int l=0;l<freightList.size();l++){
@@ -730,30 +721,21 @@ public class OrderService {
             orderForm.setOrderWeight(orderAddress.getOrderAddressRoughWeight());
             orderForm.setOrderTotalTrayNumber(trayNumber[0]);
         }
-
-        // 判断是否是首页商城的订单
-        if (is[0]){
-            orderForm.setCashDepositType(2);
+        if (!"0".equals(userInfo.getMemberId())){
+            if (userInfo.getMemberPrice().compareTo(orderForm.getOrderPrice())==-1){
+                this.orderFormMapper.deleteById(orderForm.getId());
+                this.orderAddressMapper.deleteById(orderAddress.getId());
+                rel.put("data","201");
+                return rel;//会员预存余额不足支付本次交易，请续费会员或调整购物车后生成订单
+            }
+            userInfo.setMemberPrice(userInfo.getMemberPrice().subtract(orderForm.getOrderPrice()));
+            this.userInfoMapper.updateById(userInfo);
+            orderForm.setOrderStatus(2);
+        }else {
             //把订单编号存到redis中
             Integer orderTime = Integer.parseInt(this.getConfigValue("intentionGoldTime"));
             redisUtil.set("intentionGold,"+orderForm.getOrderNumber(),"intentionGold,"+orderForm.getOrderNumber());
             redisUtil.expire("intentionGold,"+orderForm.getOrderNumber(),orderTime, TimeUnit.SECONDS);
-        }else {
-            if (!"0".equals(userInfo.getMemberId())){
-                if (userInfo.getMemberPrice().compareTo(orderForm.getOrderPrice())==-1){
-                    this.orderFormMapper.deleteById(orderForm.getId());
-                    this.orderAddressMapper.deleteById(orderAddress.getId());
-                    return 201;//会员预存余额不足支付本次交易，请续费会员或调整购物车后生成订单
-                }
-                userInfo.setMemberPrice(userInfo.getMemberPrice().subtract(orderForm.getOrderPrice()));
-                this.userInfoMapper.updateById(userInfo);
-                orderForm.setOrderStatus(2);
-            }else {
-                //把订单编号存到redis中
-                Integer orderTime = Integer.parseInt(this.getConfigValue("intentionGoldTime"));
-                redisUtil.set("intentionGold,"+orderForm.getOrderNumber(),"intentionGold,"+orderForm.getOrderNumber());
-                redisUtil.expire("intentionGold,"+orderForm.getOrderNumber(),orderTime, TimeUnit.SECONDS);
-            }
         }
         //把购物车订单转换为总订单子属
         OrderModel orderModel = new OrderModel();
@@ -773,19 +755,21 @@ public class OrderService {
             //删除购物车失效缓存
             redisUtil.delete("shopTrolley,"+orderModelId);
         });
-        if (ii[0]<=0) return ii[0];
-        if (i==0) return i;
+        if (ii[0]<=0){rel.put("data",ii[0]); return rel;}
+        if (i==0) {rel.put("data",i); return rel;}
         orderAddress.setAgoOrderAddressPrice(orderAddress.getOrderAddressPrice());
         orderAddress.setAgoOrderAddressFreight(orderAddress.getOrderAddressFreight());
         orderAddress.setAgoOrderAddressFreightPrice(orderAddress.getOrderAddressFreightPrice());
         i = orderAddressMapper.updateById(orderAddress);
-        if (i==0) return i;
+        if (i==0) {rel.put("data",i); return rel;}
         orderForm.setAgoProductPrice(orderForm.getProductPrice());
         orderForm.setAgoOrderPrice(orderForm.getOrderPrice());
         orderForm.setAgoOrderFreight(orderForm.getOrderFreight());
         i = orderFormMapper.updateById(orderForm);
-        if (i==0) return i;
-        return i;
+        if (i==0) {rel.put("data",i); return rel;};
+        rel.put("data",i);
+        rel.put("id",orderForm.getId().toString());
+        return rel;
     }
 
     /**
@@ -1754,7 +1738,7 @@ public class OrderService {
             }
             // 修改该地址订单下的所有地址为已收货
             OrderAddress orderAddress = new OrderAddress();
-            orderAddress.setOrderAddressShopStatus(2);
+            orderAddress.setOrderAddressType(2);
             orderAddressMapper.update(orderAddress,new QueryWrapper<OrderAddress>().eq("order_id",orderForm.getId()));
         }
 //        this.lookOrder(orderFormId,0);
