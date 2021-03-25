@@ -1754,7 +1754,7 @@ public class OrderService {
             }
             // 修改该地址订单下的所有地址为已收货
             OrderAddress orderAddress = new OrderAddress();
-            orderAddress.setOrderAddressType(2);
+            orderAddress.setOrderAddressShopStatus(2);
             orderAddressMapper.update(orderAddress,new QueryWrapper<OrderAddress>().eq("order_id",orderForm.getId()));
         }
 //        this.lookOrder(orderFormId,0);
