@@ -192,10 +192,10 @@ public class ArticleController {
         String pageNum = request.getParameter("pageNum");
         if (StringUtil.isEmpty(pageNum)) pageNum = "1";
         String classifyId = request.getParameter("classifyId");
-        if (StringUtil.isEmpty(classifyId)) return new CommonResult(500,"classifyId 为空");
+//        if (StringUtil.isEmpty(classifyId)) return new CommonResult(500,"classifyId 为空");
         String title = request.getParameter("title");
         Article article = new Article();
-        article.setClassifyId(classifyId);
+        if (!"".equals(classifyId))article.setClassifyId(classifyId);
         article.setTitle("%"+title+"%");
         PageInfo pageInfo = articleService.articleList(Integer.parseInt(pageNum),article,null);
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);

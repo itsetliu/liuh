@@ -58,7 +58,11 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
                 if ("intentionGold".equals(strs[0])){
                     QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
                     orderFormQueryWrapper.eq("order_number",strs[1]).eq("order_status",0);
-                    OrderForm orderForm = orderFormMapper.selectOne(orderFormQueryWrapper);
+                    OrderForm orderForm = null;
+                    List<OrderForm> orderForms = orderFormMapper.selectList(orderFormQueryWrapper);
+                    if (orderForms.size()>0){
+                        orderForm = orderForms.get(0);
+                    }
                     orderFormMapper.delete(orderFormQueryWrapper);
                     QueryWrapper<OrderAddress> orderAddressQueryWrapper = new QueryWrapper<>();
                     orderAddressQueryWrapper.eq("order_id",orderForm.getId());
@@ -85,15 +89,15 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
                         }
                     });
                     System.err.println("删除的订单号是: " + strs[1]);
-                } else if ("orderCode".equals(strs[0])){
-                    QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
-                    orderFormQueryWrapper.eq("order_number",strs[1]).eq("order_status",1);
-                    OrderForm orderForm = orderFormMapper.selectOne(orderFormQueryWrapper);
-                    if (orderForm!=null){
-                        orderForm.setOrderStatus(4);
-                        orderFormMapper.updateById(orderForm);
-                        System.err.println("过期的订单号是: " + strs[1]);
-                    }
+//                } else if ("orderCode".equals(strs[0])){
+//                    QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
+//                    orderFormQueryWrapper.eq("order_number",strs[1]).eq("order_status",1);
+//                    OrderForm orderForm = orderFormMapper.selectOne(orderFormQueryWrapper);
+//                    if (orderForm!=null){
+//                        orderForm.setOrderStatus(4);
+//                        orderFormMapper.updateById(orderForm);
+//                        System.err.println("过期的订单号是: " + strs[1]);
+//                    }
                 } else if ("couponId".equals(strs[0])){
                     QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
                     couponQueryWrapper.eq("id",strs[1]).eq("status",0);
@@ -104,20 +108,20 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
                         couponMapper.updateById(coupon);
                         System.err.println("过期的红包是: " + strs[1]);
                     }
-                }else if ("shopTrolley".equals(strs[0])){
-                    OrderModel orderModel = orderModelMapper.selectById(strs[1]);
-                    if (orderModel.getLabelType()==1) FileUtil.delFile(orderModel.getLabelInfo());
-                    if (orderModel.getCartonType()==1){
-                        List<String> cartonInfoList = JSON.parseArray(orderModel.getCartonInfo(),String.class);
-                        cartonInfoList.forEach(cartonInfo->{
-                            FileUtil.delFile(cartonInfo);
-                        });
-                    }
-                    orderModelMapper.deleteById(strs[1]);
-                    System.err.println("过期的购物车订单是: " + strs[1]);
-                }else if ("lockPrice1".equals(strs[0])){
-                    userLockMapper.deleteById(strs[1]);
-                    System.err.println("删除的锁价数据是: " + strs[1]);
+//                }else if ("shopTrolley".equals(strs[0])){
+//                    OrderModel orderModel = orderModelMapper.selectById(strs[1]);
+//                    orderModelMapper.deleteById(strs[1]);
+//                    if (orderModel.getLabelType()==1) FileUtil.delFile(orderModel.getLabelInfo());
+//                    if (orderModel.getCartonType()==1){
+//                        List<String> cartonInfoList = JSON.parseArray(orderModel.getCartonInfo(),String.class);
+//                        cartonInfoList.forEach(cartonInfo->{
+//                            FileUtil.delFile(cartonInfo);
+//                        });
+//                    }
+//                    System.err.println("过期的购物车订单是: " + strs[1]);
+//                }else if ("lockPrice1".equals(strs[0])){
+//                    userLockMapper.deleteById(strs[1]);
+//                    System.err.println("删除的锁价数据是: " + strs[1]);
                 }else if ("lockPrice2".equals(strs[0])){
                     UserLock userLock = userLockMapper.selectById(strs[1]);
                     userLock.setStatus(0);

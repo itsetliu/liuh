@@ -113,14 +113,14 @@
 <body>
 <div class="head1">
 <#--    <div class="float_left_33"><img src="file:///E:/word/cosmo/target/classes/logo.png"></img></div>-->
-   <div class="float_left_33"><img src="file:///root/img/cosmo/logo.png"></img></div>
+   <div class="float_left_33"><img src="file:///root/img/cosmo/hetong/logo.png"></img></div>
     <div class="float_left_33 text_align xiaoShouHeTong">购销合同</div>
     <div class="float_left_33 text_align nameAdd"><b>昆山科世茂包装材料有限公司<br></br>江苏昆山千灯石浦利都路298号</b></div>
 </div>
 <div class="head2">
     <div class="float_left_33 margin_top">
         <p>供方：昆山科世茂包装材料有限公司</p>
-        <p>需方：<#if company??>${company}</#if></p>
+        <p>需方：<#if orderDemander??>${orderDemander}</#if></p>
         <p>第一条 名称、数量、金额及交（提）货时间：</p>
     </div>
     <div class="float_left_33 margin_top">
@@ -179,19 +179,19 @@
                  <td><#if orderModel.modelTotalSuttle??>${orderModel.modelTotalSuttle}</#if></td>
                  <td><#if orderModel.pipeWeight??>${orderModel.pipeWeight}</#if></td>
                  <td><#if orderModel.pipeDia??>${orderModel.pipeDia}</#if></td>
-                 <td><#if orderModel.cartonNumber??>${orderModel.cartonNumber}</#if></td>
+                 <td><#if orderModel.cartonPipeNumber??>${orderModel.cartonPipeNumber}</#if></td>
                  <td><#if orderModel.cartonType??>${orderModel.cartonType}</#if></td>
                  <td><#if orderModel.cartonWeight??>${orderModel.cartonWeight}</#if></td>
-                 <td><#if orderModel.labelType??><#if (orderModel.labelType==0)>中性<#else>定制</#if></#if></td>
+                 <td><#if orderModel.labelType??><#if (orderModel.labelType==0)>中性<#else><#if (orderModel.labelType==1)>定制<#else>无标签</#if></#if></#if></td>
                  <td><#if orderModel.trayNumber??>${orderModel.trayNumber}</#if></td>
-                 <td>20</td>
+                 <td><#if orderModel.trayNumber??>${orderModel.trayNumber*20}</#if></td>
                  <td><#if orderModel.trayModel??>${orderModel.trayModel}</#if></td>
                  <td><#if orderModel.trayCapacity??>${orderModel.trayCapacity}</#if></td>
                  <td><#if orderModel.rollNumber??>${orderModel.rollNumber}</#if></td>
                  <td><#if orderModel.modelTotalRoughWeight??>${orderModel.modelTotalRoughWeight}</#if></td>
-                 <td><#if orderModel.orderModelFreightPrice??>${orderModel.orderModelFreightPrice}</#if></td>
+                 <td><#if freightPrice??>${freightPrice}</#if></td>
                  <td><#if orderModel.orderModelFreight??>${orderModel.orderModelFreight}</#if></td>
-                 <td><#if orderModel.modelUnitPrice??>${orderModel.modelUnitPrice}</#if></td>
+                 <td><#if orderModel.modelUnitPrice??>${orderModel.modelUnitPrice-orderModel.memberDiscount}</#if></td>
                  <td><#if orderModel.modelTotalPrice??>${orderModel.modelTotalPrice}</#if></td>
             </tr>
         </#list>
@@ -224,8 +224,9 @@
         <tr>
             <td colspan="2">合计</td>
             <td colspan="2">含增值税13%</td>
-            <td colspan="9">备注：</td>
-            <td colspan="11"><#if orderPrice??>${orderPrice}</#if></td>
+            <td colspan="6">备注：</td>
+            <td colspan="4"><#if orderPrice??>订单金额：${orderPrice}</#if></td>
+            <td colspan="10">${coupon}</td>
         </tr>
     </table>
 </div>
@@ -241,7 +242,7 @@
 </div>
 <div style="margin-left:25%;margin-top:0;margin-bottom:5%;width:160px;height:160px;position: absolute; left: 0; bottom: 0;">
 <#--    <img src="file:///E:/word/cosmo/target/classes/gongzhang.png" class="gongZhang" ></img>-->
-    <img src="file:///root/img/cosmo/gongzhang.png" class="gongZhang" ></img>
+    <img src="file:///root/img/cosmo/hetong/gongzhang.png" class="gongZhang" ></img>
 </div>
 <div class="head5">
     <div style="z-index:1;" class="float_left_50">
@@ -251,15 +252,17 @@
         <p>委托代理人：叶建伟</p>
         <p>电话：13867493672</p>
         <p>传真：0512-57277131</p>
-        <p>开户行：工商银行昆山市千灯支行</p>
+        <p>账户：37400103004229141</p>
+        <p>开户行：上海银行昆山支行</p>
     </div>
     <div style="z-index:1;border-left: 0px;" class="float_left_50">
-        <p class="text_align">需方</p>
-        <p>需方（章）：<#if company??>${company}</#if></p>
+        <p class="text_align">收货方</p>
+        <p>收货方：<#if company??>${company}</#if></p>
         <p>地址：<#if userAddress??>${userAddress}</#if></p>
         <p>委托代理人：<#if userName??>${userName}</#if></p>
         <p>电话：<#if userPhone??>${userPhone}</#if></p>
         <p>传真：<#if fax??>${fax}</#if></p>
+        <p>&nbsp;</p>
         <p>&nbsp;</p>
     </div>
 

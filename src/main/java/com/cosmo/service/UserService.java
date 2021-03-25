@@ -19,9 +19,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+
+    @Resource
+    private CouponService couponService;
+
+
     @Resource
     private UserInfoMapper userInfoMapper;
     @Resource
@@ -35,15 +41,23 @@ public class UserService {
     @Resource
     private UserMemberMapper userMemberMapper;
     @Resource
+    private UserLockMapper userLockMapper;
+    @Resource
     private UserMemberApplyMapper userMemberApplyMapper;
     @Resource
     private UserMemberModelMapper userMemberModelMapper;
     @Resource
     private UserWithdrawPriceApplyMapper userWithdrawPriceApplyMapper;
     @Resource
+    private UserPurchaserMapper userPurchaserMapper;
+    @Resource
     private HatCityMapper hatCityMapper;
     @Resource
+    private FreightMapper freightMapper;
+    @Resource
     private CouponMapper couponMapper;
+    @Resource
+    private CouponHomeMapper couponHomeMapper;
     @Resource
     private ConfigMapper configMapper;
     @Resource
@@ -64,8 +78,15 @@ public class UserService {
         userInfoQueryWrapper.eq("status",map.get("status"));
         String wxName = map.get("wxName").toString();
         if (!StringUtil.isEmpty(wxName)) userInfoQueryWrapper.like("wx_name",wxName);
+        String name = map.get("name").toString();
+        if (!StringUtil.isEmpty(name)) userInfoQueryWrapper.like("name",name);
+        String phone = map.get("phone").toString();
+        if (!StringUtil.isEmpty(phone)) userInfoQueryWrapper.like("phone",phone);
+        String identity = map.get("identity").toString();
+        if (!StringUtil.isEmpty(identity)) userInfoQueryWrapper.like("identity",identity);
         String serialNumber = map.get("serialNumber").toString();
         if (!StringUtil.isEmpty(serialNumber)) userInfoQueryWrapper.likeRight("serial_number",serialNumber+"-");
+        userInfoQueryWrapper.orderByDesc("last_login_time");
         Page page = new Page(Integer.parseInt(pageNum),10);
         IPage<UserInfo> sysUserList = userInfoMapper.selectPage(page,userInfoQueryWrapper);
         PageInfo pageInfo = new PageInfo(sysUserList);
@@ -125,7 +146,10 @@ public class UserService {
         cityIdMap.put("province",addresss[0]);
         cityIdMap.put("city",addresss[1]);
         String cityId = hatCityMapper.cityId(cityIdMap);
-        if (cityId!=null&&cityId!="") return true;
+        QueryWrapper<Freight> freightQueryWrapper = new QueryWrapper<>();
+        freightQueryWrapper.eq("hatID",cityId);
+        Integer integer = freightMapper.selectCount(freightQueryWrapper);
+        if (integer>0) return true;
         return false;
     }
 
@@ -312,6 +336,346 @@ public class UserService {
     }
 
     /**
+     * 获取首页红包 数据
+     * @return
+     */
+    public List<CouponHome> getHomeCoupon(){
+        List<CouponHome> couponHomeList = couponHomeMapper.selectList(null);
+        /*Config config = configMapper.selectOne(new QueryWrapper<Config>().eq("type", 5).eq("code", "homeCoupon"));
+        Map map = JSON.parseObject(config.getValue(), Map.class);*/
+        return couponHomeList;
+    }
+
+    /**
+     * 更新首页红包 数据
+     * @param value
+     * @return
+     */
+    /*public Integer setHomeCoupon(String value){
+        Config config1 = configMapper.selectOne(new QueryWrapper<Config>().eq("type", 5).eq("code", "homeCoupon"));
+        if (config1==null){//不存在及新增
+            Config config = new Config();
+            config.setCode("homeCoupon");
+            config.setType(5);
+            config.setValue(value);
+            config.setName("首页红包");
+            return configMapper.insert(config);
+        }else {//存在及更新
+            Config config = new Config();
+            config.setValue(value);
+            return configMapper.update(config,new QueryWrapper<Config>().eq("type", 5).eq("code", "homeCoupon"));
+        }
+    }*/
+
+    /**
+     * 根据首页红包id删除首页红包
+     * @return
+     */
+    public Integer addHomeCoupon(){
+        return configMapper.delete(new QueryWrapper<Config>().eq("type", 5).eq("code", "homeCoupon"));
+    }
+
+    /**
+     * 新增首页红包
+     * @param map
+     * @return
+     */
+    public Integer addHomeCoupon(Map<String, String> map){
+        CouponHome couponHome = new CouponHome();
+        couponHome.setName(map.get("name"));
+        couponHome.setFull(map.get("full"));
+        couponHome.setSubtract(map.get("subtract"));
+        couponHome.setTime(map.get("time"));
+        couponHome.setType(map.get("type"));
+        return couponHomeMapper.insert(couponHome);
+    }
+
+    /**
+     * 根据首页红包id删除首页红包
+     * @return
+     */
+    public Integer delHomeCoupon(String couponHomeId){
+//        return configMapper.delete(new QueryWrapper<Config>().eq("type", 5).eq("code", "homeCoupon"));
+        return couponHomeMapper.deleteById(couponHomeId);
+    }
+
+    /**
+     * 首页红包领取
+     * @param map
+     * @return
+     */
+    @Transactional(value="txManager1")
+    public Integer neckHomeCoupon(Map<String, String> map){
+        int[] i = {0};
+        List<CouponHome> couponHomeList = this.getHomeCoupon();
+        couponHomeList.forEach(couponHome -> {
+            Map<String, String> map1 = new HashMap<>();
+            map1.put("userId",map.get("userId"));
+            map1.put("name",couponHome.getName());
+            map1.put("full",couponHome.getFull());
+            map1.put("subtract",couponHome.getSubtract());
+            map1.put("status","0");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date now = new Date();
+            long time=Integer.parseInt(couponHome.getTime())*60*1000;//homeCoupon.get("time")分钟
+            Date afterDate=new Date(now.getTime()+time);//30分钟后的时间
+//        Date beforeDate=new Date(now.getTime()-time);//30分钟前的时间
+//        System.out.println(sdf.format(afterDate));
+//        System.out.println(sdf.format(beforeDate));
+            map1.put("time",sdf.format(afterDate));
+            map1.put("type",couponHome.getType());
+            map1.put("number","1");
+            this.addCoupon(map1);
+            i[0]++;
+        });
+        return i[0];
+    }
+
+    /**
+     * 分页查询 拥有我分享的红包的用户
+     * @param map
+     * @return
+     */
+    public PageInfo selectSonUserInfo(Map<String, String> map){
+        QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
+        couponQueryWrapper.eq("type",1).ne("user_id",map.get("userId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper.like("ago_user_id","[\""+map.get("userId")+"\",");
+        List<Coupon> couponList = couponMapper.selectList(couponQueryWrapper);
+        List<String> collect = couponList.stream().map(coupon -> {
+            return coupon.getUserId();
+        }).collect(Collectors.toList());
+        // 创建一个新的list集合，用于存储去重后的元素
+        List<String> userIds = new ArrayList();
+        // 遍历list集合
+        for (int i = 0; i < collect.size(); i++) {
+            // 判断userIds集合中是否包含collect中的元素
+            if (!userIds.contains(collect.get(i))) {
+                // 将未包含的元素添加进userIds集合中
+                userIds.add(collect.get(i));
+            }
+        }
+        QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
+        userInfoQueryWrapper.select("id","wx_name");
+        if (userIds.size()>0){
+            userInfoQueryWrapper.in("id",userIds);
+        }else {
+            userInfoQueryWrapper.eq("open_id","");
+        }
+        Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
+        IPage<UserInfo> userInfoIPage = userInfoMapper.selectPage(page, userInfoQueryWrapper);
+        PageInfo pageInfo = new PageInfo(userInfoIPage);
+        return pageInfo;
+    }
+
+    /**
+     * 分页查询 分享的红包
+     * status ： 0未使用，1使用后未付款，2使用后已付款，3已过期
+     * @param map
+     * @return
+     */
+    public PageInfo selectSonCoupon(Map<String, String> map){
+        QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
+        // 返现卷 且user_id 不等于分享者id
+        couponQueryWrapper.eq("type",1).ne("user_id",map.get("shareUserId"));
+        //user_id 等于拥有者id
+        couponQueryWrapper.eq("user_id",map.get("ownUserId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper.like("ago_user_id","[\""+map.get("shareUserId")+"\",");
+        if ("0".equals(map.get("status"))){
+            couponQueryWrapper.eq("status",0);
+        }else if ("1".equals(map.get("status"))){
+            couponQueryWrapper.eq("status",1).eq("employ_status",0);
+        }else if ("2".equals(map.get("status"))){
+            couponQueryWrapper.eq("status",1).eq("employ_status",1);
+        }else if ("3".equals(map.get("status"))){
+            couponQueryWrapper.eq("status",2);
+        }else if ("4".equals(map.get("status"))){
+            couponQueryWrapper.eq("status",1).eq("employ_status",2);
+        }
+        Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
+        IPage<Coupon> coupons = couponMapper.selectPage(page,couponQueryWrapper);
+        PageInfo pageInfo = new PageInfo(coupons);
+        /*List<Coupon> couponList = pageInfo.getList();
+        List<Coupon> collect = couponList.stream().map(coupon -> {
+            coupon.setUserName(userInfoMapper.selectById(coupon.getUserId()).getWxName());
+            return coupon;
+        }).collect(Collectors.toList());
+        pageInfo.setList(collect);*/
+        return pageInfo;
+    }
+
+    /**
+     * 查询拥有 分享的红包 各状态总数量和总返利
+     * @param map
+     * @return
+     */
+    public Map<String,Object> selectSonCouponInfo(Map<String, String> map){
+        // 返现的总金额
+        QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
+        couponQueryWrapper.eq("type",1).ne("user_id",map.get("userId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper.like("ago_user_id","[\""+map.get("userId")+"\",");
+        couponQueryWrapper.eq("status",1).eq("employ_status",2);
+        couponQueryWrapper.select("sum(subtract) as total");
+        Map<String, Object> mapTotal = couponService.getMap(couponQueryWrapper);
+
+
+        // 分享红包 未使用
+        QueryWrapper<Coupon> couponQueryWrapper1 = new QueryWrapper<>();
+        couponQueryWrapper1.eq("type",1).ne("user_id",map.get("userId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper1.like("ago_user_id","[\""+map.get("userId")+"\",");
+        couponQueryWrapper1.eq("status",0);
+        couponQueryWrapper1.select("count(id) as nummber");
+        Map<String, Object> map1 = couponService.getMap(couponQueryWrapper1);
+
+        // 分享红包 使用未付款
+        QueryWrapper<Coupon> couponQueryWrapper2 = new QueryWrapper<>();
+        couponQueryWrapper2.eq("type",1).ne("user_id",map.get("userId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper2.like("ago_user_id","[\""+map.get("userId")+"\",");
+        couponQueryWrapper2.eq("status",1).eq("employ_status",0);
+        couponQueryWrapper2.select("count(id) as nummber");
+        Map<String, Object> map2 = couponService.getMap(couponQueryWrapper2);
+
+        // 分享红包 使用已付款
+        QueryWrapper<Coupon> couponQueryWrapper3 = new QueryWrapper<>();
+        couponQueryWrapper3.eq("type",1).ne("user_id",map.get("userId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper3.like("ago_user_id","[\""+map.get("userId")+"\",");
+        couponQueryWrapper3.eq("status",1).eq("employ_status",1);
+        couponQueryWrapper3.select("count(subtract) as nummber");
+        Map<String, Object> map3 = couponService.getMap(couponQueryWrapper3);
+
+        // 分享红包 已过期
+        QueryWrapper<Coupon> couponQueryWrapper4 = new QueryWrapper<>();
+        couponQueryWrapper4.eq("type",1).ne("user_id",map.get("userId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper4.like("ago_user_id","[\""+map.get("userId")+"\",");
+        couponQueryWrapper4.eq("status",2);
+        couponQueryWrapper4.select("count(id) as nummber");
+        Map<String, Object> map4 = couponService.getMap(couponQueryWrapper4);
+
+        // 分享红包 已返现
+        QueryWrapper<Coupon> couponQueryWrapper5 = new QueryWrapper<>();
+        couponQueryWrapper5.eq("type",1).ne("user_id",map.get("userId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper5.like("ago_user_id","[\""+map.get("userId")+"\",");
+        couponQueryWrapper5.eq("status",1).eq("employ_status",2);
+        couponQueryWrapper5.select("count(id) as nummber");
+        Map<String, Object> map5 = couponService.getMap(couponQueryWrapper5);
+
+        if (mapTotal==null){
+            mapTotal = new HashMap<>();
+            mapTotal.put("total",0);
+        }
+        if (map1!=null) mapTotal.put("number1",map1.get("nummber"));
+        else mapTotal.put("number1",0);
+        if (map2!=null) mapTotal.put("number2",map2.get("nummber"));
+        else mapTotal.put("number2",0);
+        if (map3!=null) mapTotal.put("number3",map3.get("nummber"));
+        else mapTotal.put("number3",0);
+        if (map4!=null) mapTotal.put("number4",map4.get("nummber"));
+        else mapTotal.put("number4",0);
+        if (map5!=null) mapTotal.put("number5",map5.get("nummber"));
+        else mapTotal.put("number5",0);
+        return mapTotal;
+    }
+
+    /**
+     * 查询指定用户拥有 分享的红包 各状态总数量和总返利
+     * @param map
+     * @return
+     */
+    public Map<String,Object> selectSonUserCouponInfo(Map<String, String> map){
+        // 返现的总金额
+        QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
+        couponQueryWrapper.eq("type",1).ne("user_id",map.get("shareUserId")).eq("user_id",map.get("ownUserId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper.like("ago_user_id","[\""+map.get("shareUserId")+"\",");
+        couponQueryWrapper.eq("status",1).eq("employ_status",2);
+        couponQueryWrapper.select("sum(subtract) as total");
+        Map<String, Object> mapTotal = couponService.getMap(couponQueryWrapper);
+
+
+        // 分享红包 未使用
+        QueryWrapper<Coupon> couponQueryWrapper1 = new QueryWrapper<>();
+        couponQueryWrapper1.eq("type",1).ne("user_id",map.get("shareUserId")).eq("user_id",map.get("ownUserId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper1.like("ago_user_id","[\""+map.get("shareUserId")+"\",");
+        couponQueryWrapper1.eq("status",0);
+        couponQueryWrapper1.select("count(id) as nummber");
+        Map<String, Object> map1 = couponService.getMap(couponQueryWrapper1);
+
+        // 分享红包 使用未付款
+        QueryWrapper<Coupon> couponQueryWrapper2 = new QueryWrapper<>();
+        couponQueryWrapper2.eq("type",1).ne("user_id",map.get("shareUserId")).eq("user_id",map.get("ownUserId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper2.like("ago_user_id","[\""+map.get("shareUserId")+"\",");
+        couponQueryWrapper2.eq("status",1).eq("employ_status",0);
+        couponQueryWrapper2.select("count(id) as nummber");
+        Map<String, Object> map2 = couponService.getMap(couponQueryWrapper2);
+
+        // 分享红包 使用已付款
+        QueryWrapper<Coupon> couponQueryWrapper3 = new QueryWrapper<>();
+        couponQueryWrapper3.eq("type",1).ne("user_id",map.get("shareUserId")).eq("user_id",map.get("ownUserId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper3.like("ago_user_id","[\""+map.get("shareUserId")+"\",");
+        couponQueryWrapper3.eq("status",1).eq("employ_status",1);
+        couponQueryWrapper3.select("count(subtract) as nummber");
+        Map<String, Object> map3 = couponService.getMap(couponQueryWrapper3);
+
+        // 分享红包 已过期
+        QueryWrapper<Coupon> couponQueryWrapper4 = new QueryWrapper<>();
+        couponQueryWrapper4.eq("type",1).ne("user_id",map.get("shareUserId")).eq("user_id",map.get("ownUserId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper4.like("ago_user_id","[\""+map.get("shareUserId")+"\",");
+        couponQueryWrapper4.eq("status",2);
+        couponQueryWrapper4.select("count(id) as nummber");
+        Map<String, Object> map4 = couponService.getMap(couponQueryWrapper4);
+
+        // 分享红包 已返现
+        QueryWrapper<Coupon> couponQueryWrapper5 = new QueryWrapper<>();
+        couponQueryWrapper5.eq("type",1).ne("user_id",map.get("shareUserId")).eq("user_id",map.get("ownUserId"));
+        // [初始者用户id,           前拥有者用户id ]
+        // ["1366193605630300162",""           ]
+        couponQueryWrapper5.like("ago_user_id","[\""+map.get("shareUserId")+"\",");
+        couponQueryWrapper5.eq("status",1).eq("employ_status",2);
+        couponQueryWrapper5.select("count(id) as nummber");
+        Map<String, Object> map5 = couponService.getMap(couponQueryWrapper5);
+
+        if (mapTotal==null){
+            mapTotal = new HashMap<>();
+            mapTotal.put("total",0);
+        }
+        if (map1!=null) mapTotal.put("number1",map1.get("nummber"));
+        else mapTotal.put("number1",0);
+        if (map2!=null) mapTotal.put("number2",map2.get("nummber"));
+        else mapTotal.put("number2",0);
+        if (map3!=null) mapTotal.put("number3",map3.get("nummber"));
+        else mapTotal.put("number3",0);
+        if (map4!=null) mapTotal.put("number4",map4.get("nummber"));
+        else mapTotal.put("number4",0);
+        if (map5!=null) mapTotal.put("number5",map5.get("nummber"));
+        else mapTotal.put("number5",0);
+        return mapTotal;
+    }
+
+    /**
      * 分页查询所有返现红包
      * @param pageNum
      * @param status
@@ -338,14 +702,16 @@ public class UserService {
 
     /**
      * 分页查询该用户所有返现红包
-     * @param pageNum
-     * @param status
+     * @param map
      * @return
      */
-    public PageInfo selectUserCoupon(Integer pageNum, String userId, Integer status){
+    public PageInfo selectUserCoupon(Map<String, String> map){
         QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
-        couponQueryWrapper.eq("user_id",userId).eq("status",status);
-        Page page = new Page(pageNum,10);
+        couponQueryWrapper.eq("user_id",map.get("userId")).eq("status",map.get("status"));
+        if (!StringUtil.isEmpty(map.get("type"))){
+            couponQueryWrapper.eq("type",map.get("type"));
+        }
+        Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
         IPage<Coupon> coupons = couponMapper.selectPage(page,couponQueryWrapper);
         PageInfo pageInfo = new PageInfo(coupons);
         for (int i = 0;i<pageInfo.getList().size();i++){
@@ -370,12 +736,24 @@ public class UserService {
         for (int i=0;i<Integer.parseInt(map.get("number"));i++){
             Coupon coupon = new Coupon();
             coupon.setUserId(map.get("userId"));
-            coupon.setAgoUserId("[]");
             coupon.setName(map.get("name"));
             coupon.setFull(new BigDecimal(map.get("full")));
             coupon.setSubtract(new BigDecimal(map.get("subtract")));
             coupon.setStatus(0);
             coupon.setTime(map.get("time"));
+            coupon.setType(Integer.parseInt(map.get("type")));
+            if (coupon.getType()==0){
+                //新增的是满减卷
+                //[](存空数组json字符串)
+                String[] userIds = {};
+                coupon.setAgoUserId(JSON.toJSONString(userIds));
+            }else {
+                //新增的是返现卷
+                //[初始者用户id,前拥有者用户id](存数组json字符串)
+                String[] userIds = {map.get("userId"),""};
+                coupon.setAgoUserId(JSON.toJSONString(userIds));
+            }
+
             try {
                 index = index + couponMapper.insert(coupon);
                 //获取过期时间与当前时间的秒差
@@ -399,22 +777,26 @@ public class UserService {
      *         3该红包已使用，
      *         4领取失败
      *         5不可领取自己的分享
+     *         6该优惠卷不是返现卷，不可分享
      */
     public Integer getShare(Map<String,String> map){
-        Coupon coupon = couponMapper.selectById(Integer.parseInt(map.get("couponId")));
+        Coupon coupon = couponMapper.selectById(map.get("couponId"));
         if (!coupon.getUserId().equals(map.get("agoUserId"))) return 1;
+        if (coupon.getType()!=1) return 6;
         try {
             Date time = ft.parse(coupon.getTime());
             int compareTo = new Date().compareTo(time);
-            if (compareTo==-1) return 2;
+            if (compareTo>0) return 2;
         } catch (ParseException e) {
             e.printStackTrace();
         }
         if (coupon.getStatus()!=0) return 3;
         if (map.get("agoUserId").equals(map.get("userId"))) return 5;
         List<String> agoUserId = JSON.parseArray(coupon.getAgoUserId(),String.class);
-        agoUserId.add(map.get("agoUserId"));
-        coupon.setAgoUserId(JSON.toJSONString(agoUserId));
+
+        //[初始者用户id,前拥有者用户id](存数组json字符串)
+        String[] userIds = {agoUserId.get(0),map.get("agoUserId")};
+        coupon.setAgoUserId(JSON.toJSONString(userIds));
         coupon.setUserId(map.get("userId"));
         int i = couponMapper.updateById(coupon);
         if (i>0) return 0;
@@ -429,6 +811,9 @@ public class UserService {
     public List<Map<String,Object>> couponList(Map<String,String> map){
         QueryWrapper<Coupon> couponQueryWrapper = new QueryWrapper<>();
         couponQueryWrapper.eq("status",map.get("status")).eq("user_id",map.get("userId"));
+        if (!StringUtil.isEmpty(map.get("type"))){
+            couponQueryWrapper.eq("type",map.get("type"));
+        }
         List<Coupon> coupons = couponMapper.selectList(couponQueryWrapper);
         List<Map<String,Object>> mapList = new ArrayList<>();
         coupons.forEach(coupon -> {
@@ -460,7 +845,6 @@ public class UserService {
             }
             couponMap.put("share",0);
             mapList.add(couponMap);
-            return;
         });
         return mapList;
     }
@@ -534,6 +918,7 @@ public class UserService {
         UserMember userMember = new UserMember();
         userMember.setId(map.get("id").toString());
         userMember.setName((String)map.get("name"));
+        userMember.setDiscounts((String)map.get("discounts"));
         if (map.get("moneyMin")==null||"null".equals(map.get("moneyMin"))){ userMember.setMoneyMin(null); }
         else { userMember.setMoneyMin(new BigDecimal(String.valueOf(map.get("moneyMin")))); }
         if (map.get("moneyMax")==null||"null".equals(map.get("moneyMax"))){userMember.setMoneyMax(null);}
@@ -626,6 +1011,9 @@ public class UserService {
         if (userInfo==null) return 202; //该用户不存在
         userInfo.setStatus(1);
         userInfo.setSerialNumber(map.get("serialNumber"));
+        userInfo.setName(map.get("name"));
+        userInfo.setPhone(map.get("phone"));
+        userInfo.setIdentity(map.get("identity"));
         return userInfoMapper.updateById(userInfo);
     }
 
@@ -640,14 +1028,18 @@ public class UserService {
      *  205: 已是当前申请的会员类型
      *  206: 会员预存金额超过会员预存金额转待提现金额最大金额
      */
+    @Transactional(value="txManager1")
     public Integer addUserMemberApply(Map<String,String> map){
         String userId = map.get("userId");
         String memberId = map.get("memberId");
         UserInfo userInfo = userInfoMapper.selectById(userId);
         if (userInfo == null) return 201;//该用户不存在
         if (userInfo.getStatus()==1&&"0".equals(memberId)) return 202;//该用户已是正式用户，不可多次申请
-        UserMember userMember = userMemberMapper.selectById(memberId);
-        if (userMember == null) return 203;//该会员不存在
+        UserMember userMember = null;
+        if (!"0".equals(memberId)){
+            userMember = userMemberMapper.selectById(memberId);
+            if (userMember == null) return 203;//该会员不存在
+        }
         QueryWrapper<UserMemberApply> userMemberApplyQueryWrapper = new QueryWrapper<>();
         userMemberApplyQueryWrapper.eq("user_id",userId).eq("status","0");
         List<UserMemberApply> userMemberApplies = userMemberApplyMapper.selectList(userMemberApplyQueryWrapper);
@@ -675,6 +1067,14 @@ public class UserService {
                 }
             }
         }
+        // 判断是否开通正式用户
+        if ("0".equals(memberId)){
+//            userInfo.setName(map.get("name"));
+//            userInfo.setPhone(map.get("phone"));
+//            userInfo.setIdentity(map.get("identity"));
+//            userInfoMapper.updateById(userInfo);
+            userMemberApply.setIdentity(map.get("identity"));
+        }
         userMemberApply.setUserId(userId);
         userMemberApply.setMemberId(memberId);
         userMemberApply.setName(map.get("name"));
@@ -692,6 +1092,7 @@ public class UserService {
         userMemberApplyQueryWrapper.eq("status",map.get("status"));
         if (StringUtil.isEmpty(map.get("name"))) userMemberApplyQueryWrapper.like("name",map.get("name"));
         if (StringUtil.isEmpty(map.get("phone"))) userMemberApplyQueryWrapper.like("phone",map.get("phone"));
+        userMemberApplyQueryWrapper.orderByDesc("id");
         Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
         IPage<UserMemberApply> userMemberApplies = userMemberApplyMapper.selectPage(page,userMemberApplyQueryWrapper);
         PageInfo pageInfo = new PageInfo(userMemberApplies);
@@ -733,6 +1134,9 @@ public class UserService {
     public Integer updateUserStatus(Map<String,String> map){
         UserMemberApply userMemberApply = userMemberApplyMapper.selectById(map.get("userMemberApplyId"));
         if (userMemberApply==null) return 204;//该申请不存在
+        map.put("name",userMemberApply.getName());
+        map.put("phone",userMemberApply.getPhone());
+        map.put("identity",userMemberApply.getIdentity());
         Integer i = this.updateUserSerialNumber(map);
         if (!(i>0&&i<201)) return i;
         userMemberApply.setStatus(1);
@@ -797,7 +1201,7 @@ public class UserService {
      * @return
      */
     public Map<String,String> selectUserInfoMap(String userId){
-        UserInfo userInfo = userInfoMapper.selectById(Integer.parseInt(userId));
+        UserInfo userInfo = userInfoMapper.selectById(userId);
         Map<String,String> userInfoMap = JSON.parseObject(JSON.toJSONString(userInfo),Map.class);
         if (userInfo.getStatus()==0) userInfoMap.put("userStatus","体验用户");
         else if (userInfo.getStatus()==1) userInfoMap.put("userStatus","正式用户");
@@ -834,6 +1238,9 @@ public class UserService {
             if (userMember==null) return 202;//该会员类型不存在
             userInfo.setMemberId(userMember.getId());
         }else userInfo.setMemberId("0");
+        userInfo.setName(userInfoMap.get("name"));
+        userInfo.setPhone(userInfoMap.get("phone"));
+        userInfo.setIdentity(userInfoMap.get("identity"));
         userInfo.setPrice(new BigDecimal(userInfoMap.get("price")));
         userInfo.setGoldCoin(Integer.parseInt(userInfoMap.get("goldCoin")));
         QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
@@ -921,4 +1328,110 @@ public class UserService {
         userWithdrawPriceApply.setStatus(Integer.parseInt(map.get("status")));
         return userWithdrawPriceApplyMapper.updateById(userWithdrawPriceApply);
     }
+
+    /**
+     * 根据锁价id查询锁价数据
+     * @param userLockId
+     * @return
+     */
+    public UserLock selectUserLockById(String userLockId) {
+        return userLockMapper.selectById(userLockId);
+    }
+
+
+    /**
+     * 新增采购方信息
+     * @param map
+     * @return
+     */
+    public Integer addUserPurchaser(Map<String, String> map){
+        UserPurchaser userPurchaser = new UserPurchaser();
+        userPurchaser.setUserId(map.get("userId"));
+        userPurchaser.setCompanyName(map.get("companyName"));
+        userPurchaser.setUserName(map.get("userName"));
+        userPurchaser.setUserPhone(map.get("phone"));
+        userPurchaser.setStatus(Integer.parseInt(map.get("status")));
+        if (userPurchaser.getStatus()==0){
+            UserPurchaser userPurchaser1 = new UserPurchaser();
+            userPurchaser1.setStatus(1);
+            userPurchaserMapper.update(userPurchaser1,new QueryWrapper<UserPurchaser>().eq("user_id",userPurchaser.getUserId()));
+        }
+        return userPurchaserMapper.insert(userPurchaser);
+    }
+
+    /**
+     * 修改采购方信息
+     * @param map
+     * @return
+     */
+    public Integer updateUserPurchaser(Map<String, String> map){
+        UserPurchaser userPurchaser = userPurchaserMapper.selectById(map.get("userPurchaserId"));
+        if (!StringUtil.isEmpty(map.get("companyName"))) userPurchaser.setCompanyName(map.get("companyName"));
+        if (!StringUtil.isEmpty(map.get("userName"))) userPurchaser.setUserName(map.get("userName"));
+        if (!StringUtil.isEmpty(map.get("phone"))) userPurchaser.setUserPhone(map.get("phone"));
+        if (!StringUtil.isEmpty(map.get("status"))) {
+            userPurchaser.setStatus(Integer.parseInt(map.get("status")));
+            if (userPurchaser.getStatus()==0){
+                UserPurchaser userPurchaser1 = new UserPurchaser();
+                userPurchaser1.setStatus(1);
+                userPurchaserMapper.update(userPurchaser1,new QueryWrapper<UserPurchaser>().eq("user_id",userPurchaser.getUserId()));
+            }
+        }
+        return userPurchaserMapper.updateById(userPurchaser);
+    }
+
+    /**
+     * 根据id删除采购方信息
+     * @param userPurchaserId
+     * @return
+     */
+    public Integer delUserPurchaser(String userPurchaserId){
+        UserPurchaser userPurchaser = userPurchaserMapper.selectById(userPurchaserId);
+        int i = userPurchaserMapper.deleteById(userPurchaserId);
+        if (userPurchaser.getStatus()==0){
+            List<UserPurchaser> userPurchaserList = userPurchaserMapper.selectList(new QueryWrapper<UserPurchaser>().eq("user_id", userPurchaser.getUserId()));
+            if (userPurchaserList.size()>0){
+                UserPurchaser userPurchaser1 = userPurchaserList.get(0);
+                if (userPurchaser1!=null) {
+                    userPurchaser1.setStatus(0);
+                    userPurchaserMapper.updateById(userPurchaser1);
+                }
+            }
+        }
+        return i;
+    }
+
+    /**
+     * 根据用户id查询所有采购方信息
+     * @param map
+     * @return
+     */
+    public List<UserPurchaser> getUserPurchaserList(Map<String, String> map){
+        QueryWrapper<UserPurchaser> userPurchaserQueryWrapper = new QueryWrapper<>();
+        userPurchaserQueryWrapper.eq("user_id",map.get("userId"));
+        if (!StringUtil.isEmpty(map.get("companyName"))) userPurchaserQueryWrapper.eq("company_name",map.get("companyName"));
+        if (!StringUtil.isEmpty(map.get("userName"))) userPurchaserQueryWrapper.eq("user_name",map.get("userName"));
+        if (!StringUtil.isEmpty(map.get("phone"))) userPurchaserQueryWrapper.eq("phone",map.get("phone"));
+        if (!StringUtil.isEmpty(map.get("status"))) userPurchaserQueryWrapper.eq("status",map.get("status"));
+        return userPurchaserMapper.selectList(userPurchaserQueryWrapper);
+    }
+
+    /**
+     * 根据用户id分页查询采购方信息
+     * @param map
+     * @return
+     */
+    public PageInfo getUserPurchaserListPage(Map<String, String> map){
+        QueryWrapper<UserPurchaser> userPurchaserQueryWrapper = new QueryWrapper<>();
+        userPurchaserQueryWrapper.eq("user_id",map.get("userId"));
+        if (!StringUtil.isEmpty(map.get("companyName"))) userPurchaserQueryWrapper.eq("company_name",map.get("companyName"));
+        if (!StringUtil.isEmpty(map.get("userName"))) userPurchaserQueryWrapper.eq("user_name",map.get("userName"));
+        if (!StringUtil.isEmpty(map.get("phone"))) userPurchaserQueryWrapper.eq("phone",map.get("phone"));
+        if (!StringUtil.isEmpty(map.get("status"))) userPurchaserQueryWrapper.eq("status",map.get("status"));
+        Page page = new Page(Integer.parseInt(map.get("pageNum")),10);
+        IPage userWithdrawPriceApplyList = userPurchaserMapper.selectPage(page,userPurchaserQueryWrapper);
+        PageInfo pageInfo = new PageInfo(userWithdrawPriceApplyList);
+        return pageInfo;
+    }
+
 }

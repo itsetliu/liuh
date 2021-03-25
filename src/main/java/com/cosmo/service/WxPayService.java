@@ -6,10 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cosmo.dao.*;
 import com.cosmo.entity.*;
 import com.cosmo.util.*;
-import com.cosmo.wx.AesCbcUtil;
-import com.cosmo.wx.HttpUtils;
-import com.cosmo.wx.PayUtil;
-import com.cosmo.wx.PaymentPo;
+import com.cosmo.wx.*;
+import com.cosmo.wx.WxHttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -52,9 +50,13 @@ public class WxPayService {
 
     public final static String getPageOpenidUrl = "https://api.weixin.qq.com/sns/jscode2session";
 
+    public final static String getTokenUrl = "https://api.weixin.qq.com/cgi-bin/token";
 
+    // 订阅
+    public final static String subscriptionUrl = "https://api.weixin.qq.com/cgi-bin/message/subscribe/send";
 
     private SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat ft1 = new SimpleDateFormat("yyyy-MM-dd");
 
     @Resource
     private PayWxMapper payWxMapper;
@@ -72,6 +74,49 @@ public class WxPayService {
     private ConfigMapper configMapper;
     @Resource
     private RedisUtil redisUtil;
+
+    public Integer subscription(String openid, String orderNumber, String msg){
+        //请求参数
+        String params = "grant_type=client_credential&appid=" + appid + "&secret=" + appSecret ;
+        String result = HttpUtils.sendGet(getTokenUrl, params);
+        Map<String, String> map = JSON.parseObject(result, Map.class);
+        Map<String, String> dataMap = new HashMap();
+        HashMap<String, String> thing4Map = new HashMap<>();
+        thing4Map.put("value",orderNumber);
+        dataMap.put("thing4",JSON.toJSONString(thing4Map));
+        HashMap<String, String> phrase6Map = new HashMap<>();
+        phrase6Map.put("value",msg);
+        dataMap.put("phrase6",JSON.toJSONString(phrase6Map));
+        Map<String, String> paramsMap = new HashMap();
+        paramsMap.put("touser",openid);
+        paramsMap.put("template_id",map.get("O1XhhxYzstCbisU592Zqw5Q2Ut-W_HUrLZjJWMVrg7Y"));
+        paramsMap.put("data",JSON.toJSONString(dataMap));
+        String result1 = HttpUtils.sendPost(subscriptionUrl+"?access_token="+map.get("access_token"), JSON.toJSONString(paramsMap));
+        Map<String, Object> map1 = JSON.parseObject(result1, Map.class);
+        return (Integer)map1.get("errcode");
+    }
+
+   /* public static void main(String[] args) {
+        //请求参数
+        String params = "grant_type=client_credential&appid=wxef030d1170877ab1&secret=a4ae8ae1763887c496da4adbf4f8622d" ;
+        String result = HttpUtils.sendGet(getTokenUrl, params);
+        Map<String, String> map = JSON.parseObject(result, Map.class);
+        Map<String, String> dataMap = new HashMap();
+        HashMap<String, String> thing4Map = new HashMap<>();
+        thing4Map.put("value","测试");
+        dataMap.put("thing4",JSON.toJSONString(thing4Map));
+        HashMap<String, String> phrase6Map = new HashMap<>();
+        phrase6Map.put("value","测试测试测试测试测试测试");
+        dataMap.put("phrase6",JSON.toJSONString(phrase6Map));
+        Map<String, String> paramsMap = new HashMap();
+//        paramsMap.put("access_token",map.get("access_token"));
+        paramsMap.put("touser","o8SGC4irUh_XG1pZFYN6ABSfwC3M");
+        paramsMap.put("template_id","O1XhhxYzstCbisU592Zqw5Q2Ut-W_HUrLZjJWMVrg7Y");
+        paramsMap.put("data",JSON.toJSONString(dataMap));
+        String result1 = HttpUtils.sendPost(subscriptionUrl+"?access_token="+map.get("access_token"), JSON.toJSONString(paramsMap));
+        Map map1 = JSON.parseObject(result1, Map.class);
+        System.err.println(result1);
+    }*/
 
 
 
@@ -127,8 +172,8 @@ public class WxPayService {
                     userInfo1 = userInfoMapper.selectByOpenId(openId);
                 }
                 map2.put("status",String.valueOf(userInfo1.get("status")));
-                Integer memberId = Integer.parseInt(userInfo1.get("member_id").toString());
-                if (memberId==0) map2.put("memberName","无会员");
+                String memberId = userInfo1.get("member_id").toString();
+                if ("0".equals(memberId)) map2.put("memberName","无会员");
                 else map2.put("memberName",String.valueOf(userMemberMapper.selectById(memberId).getName()));
                 map2.put("userId", userInfo1.get("id").toString());
                 map1.put("code", "200");
@@ -304,11 +349,79 @@ public class WxPayService {
             order.setCashDepositType(1);
             order.setCashDepositPrice(new BigDecimal(cashDeposit));
             i = orderFormMapper.updateById(order);
-            QueryWrapper<Config> configQueryWrapper1 = new QueryWrapper<>();
-            configQueryWrapper1.eq("code","orderTime");
-            Integer orderTime = Integer.parseInt(configMapper.selectList(configQueryWrapper1).get(0).getValue());
-            redisUtil.set("orderCode,"+order.getOrderNumber(),"orderCode,"+order.getOrderNumber());
-            redisUtil.expire("orderCode,"+order.getOrderNumber(),orderTime, TimeUnit.SECONDS);
+//            QueryWrapper<Config> configQueryWrapper1 = new QueryWrapper<>();
+//            configQueryWrapper1.eq("code","orderTime");
+//            Integer orderTime = Integer.parseInt(configMapper.selectList(configQueryWrapper1).get(0).getValue());
+//            Integer orderTime = 0;
+//            Date nowSpecificDate = ft.parse(ft1.format(new Date())+" 08:59:59");
+//            if ((new Date()).compareTo(nowSpecificDate)==-1){//当前时间小于当天 08:59:59
+//                orderTime = (int)((nowSpecificDate.getTime() - (new Date()).getTime())/1000);
+//            }else {//当前时间大于当天 08:59:59
+//                Calendar calendar = Calendar.getInstance();
+//                calendar.setTime(nowSpecificDate);
+//                calendar.add(Calendar.DAY_OF_MONTH, +1);//传入的时间加1天
+//                Date tomorrowSpecificDate = calendar.getTime();
+//                orderTime = (int)((tomorrowSpecificDate.getTime() - (new Date()).getTime())/1000);
+//            }
+//            redisUtil.set("orderCode,"+order.getOrderNumber(),"orderCode,"+order.getOrderNumber());
+//            redisUtil.expire("orderCode,"+order.getOrderNumber(),orderTime, TimeUnit.SECONDS);
+            if (i<=0) { map.put("msg","支付失败"); return map; }
+            map.put("msg","支付成功");
+            return map;
+        }
+
+    }
+
+    /**
+     * 商城下单支付
+     * @param userId
+     * @param orderId
+     * @return
+     * @throws Exception
+     */
+    @Transactional(value="txManager1")
+    public Map<String, String> wxHomePay(String userId, String orderId, Integer type) throws Exception {
+        UserInfo userInfo = userInfoMapper.selectById(userId);
+        OrderForm order = orderFormMapper.selectById(orderId);
+        if (type==0){//微信支付
+            PaymentPo paymentPo = new PaymentPo();
+            paymentPo.setBody("商城订单付款");
+            paymentPo.setNonce_str(PayUtil.create_nonce_str());
+            paymentPo.setNotify_url(notifyUrl);
+            paymentPo.setOut_trade_no("HOME_"+order.getOrderNumber());
+            paymentPo.setTotal_fee(order.getOrderPrice().toString());
+            paymentPo.setOpenid(userInfo.getOpenId());
+            QueryWrapper<PayWx> payWxQueryWrapper = new QueryWrapper<>();
+            payWxQueryWrapper.eq("order_no",paymentPo.getOut_trade_no());
+            List<PayWx> payWxes = payWxMapper.selectList(payWxQueryWrapper);
+            if (payWxes.size()<=0){
+                PayWx payWx = new PayWx();
+                payWx.setBody(paymentPo.getBody());
+                //            payWx.setNonceStr(paymentPo.getNonce_str());
+                payWx.setOrderNo(paymentPo.getOut_trade_no());
+                payWx.setTotalFee(paymentPo.getTotal_fee());
+                payWx.setOpenId(paymentPo.getOpenid());
+                payWx.setStatus(0);
+                payWx.setType(0);
+                this.addPayWx(payWx);
+            }
+            return this.goPay(paymentPo);
+        }else {//用户余额支付
+            Map<String,String> map = new HashMap<>();
+            if(userInfo.getPrice().compareTo(order.getOrderPrice()) == -1) { map.put("msg","用户余额不足已支付意向金"); return map; }
+            userInfo.setPrice(userInfo.getPrice().subtract(order.getOrderPrice()));
+            this.userInfoMapper.updateById(userInfo);
+            UserPriceInfo userPriceInfo = new UserPriceInfo();
+            userPriceInfo.setUserId(userInfo.getId());
+            userPriceInfo.setType("-");
+            userPriceInfo.setPrice(order.getOrderPrice());
+            userPriceInfo.setInfo("商城订单付款");
+            Integer i = userPriceInfoMapper.insert(userPriceInfo);
+            if (i<=0) { map.put("msg","支付失败"); return map; }
+            redisUtil.delete("orderCode"+order.getOrderNumber());
+            order.setOrderStatus(2);
+            order.setCashDepositType(3);
+            i = orderFormMapper.updateById(order);
             if (i<=0) { map.put("msg","支付失败"); return map; }
             map.put("msg","支付成功");
             return map;
@@ -331,20 +444,48 @@ public class WxPayService {
         QueryWrapper<PayWx> payWxQueryWrapper = new QueryWrapper<>();
         payWxQueryWrapper.eq("status",0);
         this.payWxMapper.update(payWx,payWxQueryWrapper);
-        if ("COSMO".equals(orderNumber.substring(0,5))){
-            redisUtil.delete("orderCode"+orderNumber);
-            QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
-            orderFormQueryWrapper.eq("order_number",orderNumber);
-            OrderForm order = orderFormMapper.selectList(orderFormQueryWrapper).get(0);
-            order.setOrderStatus(1);
-            order.setCashDepositType(1);
-            QueryWrapper<Config> configQueryWrapper = new QueryWrapper<>();
-            configQueryWrapper.eq("code","orderTime");
-            Integer orderTime = Integer.parseInt(configMapper.selectList(configQueryWrapper).get(0).getValue());
-            redisUtil.delete("intentionGold,"+order.getOrderNumber());
-            redisUtil.set("orderCode,"+order.getOrderNumber(),"orderCode,"+order.getOrderNumber());
-            redisUtil.expire("orderCode,"+order.getId(),orderTime, TimeUnit.SECONDS);
-            return orderFormMapper.updateById(order);
+        if ("HOME_COSMO".equals(orderNumber.substring(0,10))){
+            try {
+                redisUtil.delete("orderCode"+orderNumber.substring(5));
+                QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
+                orderFormQueryWrapper.eq("order_number",orderNumber);
+                OrderForm order = orderFormMapper.selectList(orderFormQueryWrapper).get(0);
+                order.setOrderStatus(2);
+                redisUtil.delete("intentionGold,"+order.getOrderNumber());
+                return orderFormMapper.updateById(order);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else if ("COSMO".equals(orderNumber.substring(0,5))){
+            try {
+                redisUtil.delete("orderCode"+orderNumber);
+                QueryWrapper<OrderForm> orderFormQueryWrapper = new QueryWrapper<>();
+                orderFormQueryWrapper.eq("order_number",orderNumber);
+                OrderForm order = orderFormMapper.selectList(orderFormQueryWrapper).get(0);
+                order.setOrderStatus(1);
+                order.setCashDepositType(1);
+//                QueryWrapper<Config> configQueryWrapper = new QueryWrapper<>();
+//                configQueryWrapper.eq("code","orderTime");
+//                Integer orderTime = Integer.parseInt(configMapper.selectList(configQueryWrapper).get(0).getValue());
+//                Integer orderTime = 0;
+//                Date nowSpecificDate = nowSpecificDate = ft.parse(ft1.format(new Date())+" 08:59:59");
+//                if ((new Date()).compareTo(nowSpecificDate)==-1){//当前时间小于当天 08:59:59
+//                    orderTime = (int)((nowSpecificDate.getTime() - (new Date()).getTime())/1000);
+//                }else {//当前时间大于当天 08:59:59
+//                    Calendar calendar = Calendar.getInstance();
+//                    calendar.setTime(nowSpecificDate);
+//                    calendar.add(Calendar.DAY_OF_MONTH, +1);//传入的时间加1天
+//                    Date tomorrowSpecificDate = calendar.getTime();
+//                    orderTime = (int)((tomorrowSpecificDate.getTime() - (new Date()).getTime())/1000);
+//                }
+//
+//                redisUtil.set("orderCode,"+order.getOrderNumber(),"orderCode,"+order.getOrderNumber());
+//                redisUtil.expire("orderCode,"+order.getId(),orderTime, TimeUnit.SECONDS);
+                redisUtil.delete("intentionGold,"+order.getOrderNumber());
+                return orderFormMapper.updateById(order);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }else if ("VC".equals(orderNumber.substring(0,2))){
             QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
             userInfoQueryWrapper.eq("open_id",openid);
@@ -365,7 +506,7 @@ public class WxPayService {
             QueryWrapper<Config> configQueryWrapper = new QueryWrapper<>();
             configQueryWrapper.eq("code","lockTime");
             Integer lockTime = Integer.parseInt(configMapper.selectList(configQueryWrapper).get(0).getValue());
-            redisUtil.delete("lockPrice1,"+userLock.getId());
+//            redisUtil.delete("lockPrice1,"+userLock.getId());
             redisUtil.set("lockPrice2,"+userLock.getId(),"lockPrice2,"+userLock.getId());
             redisUtil.expire("lockPrice2,"+userLock.getId(),lockTime, TimeUnit.SECONDS);
             userLock.setStatus(2);
@@ -461,7 +602,7 @@ public class WxPayService {
             QueryWrapper<Config> configQueryWrapper1 = new QueryWrapper<>();
             configQueryWrapper1.eq("code","lockTime");
             Integer lockTime = Integer.parseInt(configMapper.selectList(configQueryWrapper1).get(0).getValue());
-            redisUtil.delete("lockPrice1,"+userLock.getId());
+//            redisUtil.delete("lockPrice1,"+userLock.getId());
             redisUtil.set("lockPrice2,"+userLock.getId(),"lockPrice2,"+userLock.getId());
             redisUtil.expire("lockPrice2,"+userLock.getId(),lockTime, TimeUnit.SECONDS);
             userLock.setStatus(2);
@@ -519,7 +660,7 @@ public class WxPayService {
         String body = null;
         CloseableHttpResponse response = null;
         try{
-            httpClient = HttpClients.custom().setDefaultRequestConfig(HttpUtils.REQUEST_CONFIG).setSslcontext(HttpUtils.wx_ssl_context).build();
+            httpClient = HttpClients.custom().setDefaultRequestConfig(WxHttpUtils.REQUEST_CONFIG).setSslcontext(WxHttpUtils.wx_ssl_context).build();
             httpPost.setEntity(new StringEntity(xml, "UTF-8"));
             response = httpClient.execute(httpPost);
             body = EntityUtils.toString(response.getEntity(), "UTF-8");

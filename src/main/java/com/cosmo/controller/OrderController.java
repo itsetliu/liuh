@@ -1,7 +1,11 @@
 package com.cosmo.controller;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.excel.EasyExcel;
 import com.cosmo.entity.*;
+import com.cosmo.excel.ExcelException;
+import com.cosmo.excel.ExcelUtil;
+import com.cosmo.excel.OrderExcelBO;
 import com.cosmo.service.OrderService;
 import com.cosmo.util.*;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +29,23 @@ public class OrderController {
 
     @Resource
     private OrderService orderService;
+
+    @GetMapping("/app/orderExcel")
+    public void orderExcel(HttpServletRequest request, HttpServletResponse response){
+        String orderId = request.getParameter("orderId");
+        List<OrderExcelBO> orderExcelBOList = orderService.orderExcel(orderId);
+        String fileName = String.valueOf(new Date().getTime());
+        String sheetName = "sheet1";
+        try {
+            ExcelUtil.writeExcel(response,orderExcelBOList,fileName,sheetName,new OrderExcelBO());
+        } catch (ExcelException e) {
+            e.printStackTrace();
+        }
+        /*String fileName = "order" + System.currentTimeMillis() + ".xlsx";
+        // 这里 需要指定写用哪个class去读，然后写到第一个sheet，名字为模板 然后文件流会自动关闭
+        // 如果这里想使用03 则 传入excelType参数即可
+        EasyExcel.write(fileName, OrderExcelBO.class).sheet("sheet1").doWrite(orderExcelBOList);*/
+    }
 
     @GetMapping("/app/projectExport")
     public ResponseEntity<?> export(HttpServletRequest request){
@@ -40,6 +63,39 @@ public class OrderController {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return new ResponseEntity<String>("{ \"code\" : \"404\", \"message\" : \"not found\" }",
                 headers, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * 修改订单已读状态 为已读
+     * @param request
+     * @return
+     */
+    @PostMapping("/order/lookOrder")
+    public CommonResult lookOrder(HttpServletRequest request){
+        String orderId = request.getParameter("orderId");
+        if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"orderId 为空");
+        Integer i = orderService.lookOrder(orderId, 1);
+        if (i>0) return new CommonResult(200,"已读");
+        else return new CommonResult(201,"已读失败");
+    }
+
+    /**
+     * 后台修改订单型号规格
+     * @param request
+     * @return
+     */
+    @PostMapping("/order/updateOrderModel")
+    public CommonResult updateOrderModel(HttpServletRequest request){
+        String updateOrderModerForm = request.getParameter("updateOrderModerForm");
+        if (StringUtil.isEmpty(updateOrderModerForm)) return new CommonResult(500,"updateOrderModerForm 为空");
+        String agoModelTotalPrice = request.getParameter("agoModelTotalPrice");
+        if (StringUtil.isEmpty(agoModelTotalPrice)) return new CommonResult(500,"agoModelTotalPrice 为空");
+        Map<String, String> map = new HashMap<>();
+        map.put("updateOrderModerForm",updateOrderModerForm);
+        map.put("agoModelTotalPrice",agoModelTotalPrice);
+        Integer i = orderService.updateOrderModel(map);
+        if (i>0) return new CommonResult(200,"修改成功");
+        else return new CommonResult(201,"修改失败");
     }
 
     /**
@@ -129,8 +185,10 @@ public class OrderController {
         map.put("modelUnitPrice",modelUnitPrice);map.put("modelTotalPrice",modelTotalPrice);map.put("modelProcessCost",modelProcessCost);
         map.put("modelRawPrice",modelRawPrice);map.put("modelRawPriceType",modelRawPriceType);
         map.put("memberId",memberId);map.put("memberDiscount",memberDiscount);
-        Integer i = orderService.addOrderModel(map);
-        if (i>0) return new CommonResult(200,"新增成功");
+        Map<String, String> map1 = orderService.addOrderModel(map);
+        Map<String, String> map2 = new HashMap();
+        map2.put("orderModelId",map1.get("orderModelId"));
+        if (Integer.parseInt(map1.get("i"))>0) return new CommonResult(200,"新增成功",map2);
         return new CommonResult(201,"新增失败");
     }
 
@@ -207,14 +265,19 @@ public class OrderController {
         Integer i = 0;
         if ("2".equals(rawPriceType)) {
             i = orderService.createOrderForm1(map);
-            if (i==201) return new CommonResult(201,"所选购物车型号不是同次锁价数据");
+            if (i==205) return new CommonResult(201,"待付款的锁价订单同时只可存在一个");
+            else if (i==201) return new CommonResult(201,"所选购物车型号不是同次锁价数据");
             else if (i==202) return new CommonResult(201,"超过差价上限，请重新整理购物车");
             else if (i==203) return new CommonResult(201,"用户余额不足已补差价，请充值后再次操作");
             else if (i==204) return new CommonResult(201,"用户余额不足已补差价及支付运费，请充值后再次操作");
+            else if (i==206) return new CommonResult(201,"用户没有默认采购方信息");
+            else if (i==207) return new CommonResult(201,"该地址暂无运费信息，无法生成订单");
         }
         else {
             i = orderService.createOrderForm(map);
             if (i==201) return new CommonResult(201,"会员预存余额不足支付本次交易，请续费会员或调整购物车后生成订单");
+            else if (i==202) return new CommonResult(201,"用户没有默认采购方信息");
+            else if (i==203) return new CommonResult(201,"该地址暂无运费信息，无法生成订单");
         }
         if (i>0) return new CommonResult(200,"合并成功");
         return new CommonResult(201,"合并失败");
@@ -256,7 +319,9 @@ public class OrderController {
         Integer i = orderService.addOrderAddress(map);
         if (i==501) return new CommonResult(201,"有型号卷数不足");
         else if (i==502) return new CommonResult(201,"余额不足支付本次运费");
-        else if (i==503) return new CommonResult(201,"余额不足支付该订单的托盘差价");
+        else if (i==503) return new CommonResult(201,"会员余额不足支付本次运费");
+        else if (i==504) return new CommonResult(201,"余额不足支付该订单的托盘差价");
+        else if (i==505) return new CommonResult(201,"会员余额不足支付该订单的托盘差价");
         else if (i>0) return new CommonResult(200,"新增成功");
         return new CommonResult(200,"新增失败");
     }
@@ -274,7 +339,11 @@ public class OrderController {
         if (StringUtil.isEmpty(orderStatus)) return new CommonResult(500,"orderStatus 为空");
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
-        PageInfo pageInfo = orderService.orderFormPageList(Integer.parseInt(pageNum),Integer.parseInt(orderStatus),userId);
+//        PageInfo pageInfo = orderService.orderFormPageList(Integer.parseInt(pageNum),Integer.parseInt(orderStatus),userId);
+        HashMap<String, String> map = new HashMap<>();
+        map.put("orderStatus",orderStatus);
+        map.put("userId",userId);
+        PageInfo pageInfo = orderService.orderFormPageListPc(Integer.parseInt(pageNum),map);
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -388,8 +457,10 @@ public class OrderController {
         if (i==0) return new CommonResult(200,"绑定成功");
         else if (i==1) return new CommonResult(201,"该订单不存在");
         else if (i==2) return new CommonResult(201,"当前状态无法绑定返现红包");
-        else if (i==3) return new CommonResult(201,"当前红包不存在");
-        else return new CommonResult(201,"绑定成功");
+        else if (i==3) return new CommonResult(201,"当前优惠卷不存在");
+        else if (i==4) return new CommonResult(201,"优惠卷已使用");
+        else if (i==5) return new CommonResult(201,"该订单不满足优惠卷使用条件");
+        else return new CommonResult(201,"绑定失败");
     }
 
     /**
@@ -424,6 +495,21 @@ public class OrderController {
         String orderId = request.getParameter("orderId");
         if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"orderId 为空");
         List<OrderModel> orderModelList = orderService.orderModelList(orderId);
+        if (orderModelList.size()>0) return new CommonResult(200,"查询成功",orderModelList);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 后台
+     * 根据合同订单Id查询合同订单下所有型号
+     * @param request
+     * @return
+     */
+    @GetMapping("/order/orderModelList3")
+    public CommonResult orderModelList3(HttpServletRequest request){
+        String orderId = request.getParameter("orderId");
+        if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"orderId 为空");
+        List<OrderModel> orderModelList = orderService.orderModelList1(orderId);
         if (orderModelList.size()>0) return new CommonResult(200,"查询成功",orderModelList);
         return new CommonResult(201,"未查询到结果",null);
     }

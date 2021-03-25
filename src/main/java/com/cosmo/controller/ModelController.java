@@ -1,5 +1,7 @@
 package com.cosmo.controller;
 
+import com.cosmo.dao.CalculatorModelRecommendMapper;
+import com.cosmo.entity.CalculatorModelRecommend;
 import com.cosmo.entity.Model;
 import com.cosmo.entity.ModelCarton;
 import com.cosmo.entity.ModelShow;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +164,10 @@ public class ModelController {
      */
     @GetMapping("/app/model/home")
     public CommonResult home(){
+//        long time = new Date().getTime();
         List<Map<String,Object>> mapList = modelService.home();
+//        long time1 = new Date().getTime();
+//        System.err.println(time1-time);
         if (mapList.size()>0) return new CommonResult(200,"查询成功",mapList);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -211,6 +217,7 @@ public class ModelController {
         modelShow.setModelId(modelId);
         BigDecimal suttle1 = new BigDecimal(suttle);
         if (suttle1.compareTo(new BigDecimal("10"))==-1) suttle1=suttle1.multiply(new BigDecimal("10"));
+        if (Integer.parseInt(thickness)<10) thickness = "0"+thickness;
         String name = typeName+thickness+suttle1.toString();
         modelShow.setName(name);
         modelShow.setModelName(modelName);
@@ -242,6 +249,8 @@ public class ModelController {
         if (!StringUtil.isEmpty(scope)) modelShow.setScope(scope);
         String volume = request.getParameter("volume");
         if (!StringUtil.isEmpty(volume)) modelShow.setVolume(Integer.parseInt(volume));
+        String pipeWeight = request.getParameter("pipeWeight");
+        if (!StringUtil.isEmpty(pipeWeight)) modelShow.setPipeWeight(pipeWeight);
         int i = modelService.updateModelShow(modelShow);
         if (i>0) return new CommonResult(200,"修改成功");
         return new CommonResult(201,"修改失败");
@@ -301,8 +310,13 @@ public class ModelController {
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         String lockPrice = request.getParameter("lockPrice");
         if (StringUtil.isEmpty(lockPrice)) return new CommonResult(500,"lockPrice 为空");
+        String margin = request.getParameter("margin");
+        if (StringUtil.isEmpty(margin)) return new CommonResult(500,"margin 为空");
+        String obligation = request.getParameter("obligation");
+        if (StringUtil.isEmpty(obligation)) return new CommonResult(500,"obligation 为空");
         Map<String,String> map = new HashMap<>();
         map.put("userId",userId);map.put("lockPrice",lockPrice);
+        map.put("margin",margin);map.put("obligation",obligation);
         String i = modelService.lockPrice(map);
         if ("201".equals(i)) return new CommonResult(201,"userId错误/不存在",null);
         else if (i!=null) return new CommonResult(200,"新增成功，锁价数据id为",i);
@@ -337,9 +351,7 @@ public class ModelController {
     public CommonResult updateUserLockBalance(HttpServletRequest request){
         String userLockId = request.getParameter("userLockId");
         if (StringUtil.isEmpty(userLockId)) return new CommonResult(500,"userLockId 为空");
-        String balance = request.getParameter("balance");
-        if (StringUtil.isEmpty(balance)) return new CommonResult(500,"balance 为空");
-        Integer i = modelService.updateUserLockBalance(userLockId,balance);
+        Integer i = modelService.updateUserLockBalance(userLockId);
         if (i>0) return new CommonResult(200,"成功");
         return new CommonResult(201,"失败");
     }
@@ -410,6 +422,136 @@ public class ModelController {
         Integer i = modelService.delModelCarton(modelCartonId);
         if (i>0) return new CommonResult(200,"删除成功");
         return new CommonResult(201,"删除失败");
+    }
+
+    /**
+     * 新增计算机型号推荐
+     * @param request
+     * @return
+     */
+    @PostMapping("/model/addCalculatorModelRecommend")
+    public CommonResult addCalculatorModelRecommend(HttpServletRequest request){
+//        String calculatorModelRecommendId = request.getParameter("calculatorModelRecommendId");
+//        if (StringUtil.isEmpty(calculatorModelRecommendId)) return new CommonResult(500,"calculatorModelRecommendId 为空");
+        String modelType = request.getParameter("modelType");
+        if (StringUtil.isEmpty(modelType)) return new CommonResult(500,"modelType 为空");
+        String machineType1 = request.getParameter("machineType1");
+//        if (StringUtil.isEmpty(machineType1)) return new CommonResult(500,"machineType1 为空");
+        String machineType2 = request.getParameter("machineType2");
+//        if (StringUtil.isEmpty(machineType2)) return new CommonResult(500,"machineType2 为空");
+        String stretchType = request.getParameter("stretchType");
+//        if (StringUtil.isEmpty(stretchType)) return new CommonResult(500,"stretchType 为空");
+        String stretchScope = request.getParameter("stretchScope");
+//        if (StringUtil.isEmpty(stretchScope)) return new CommonResult(500,"stretchScope 为空");
+        String packType = request.getParameter("packType");
+        if (StringUtil.isEmpty(packType)) return new CommonResult(500,"packType 为空");
+        String kgScope = request.getParameter("kgScope");
+        if (StringUtil.isEmpty(kgScope)) return new CommonResult(500,"kgScope 为空");
+        String modelRecommend = request.getParameter("modelRecommend");
+        if (StringUtil.isEmpty(modelRecommend)) return new CommonResult(500,"modelRecommend 为空");
+        CalculatorModelRecommend calculatorModelRecommend = new CalculatorModelRecommend();
+//        calculatorModelRecommend.setId(calculatorModelRecommendId);
+        calculatorModelRecommend.setModelType(Integer.parseInt(modelType));
+        if (!StringUtil.isEmpty(machineType1)) calculatorModelRecommend.setMachineType1(Integer.parseInt(machineType1));
+        if (!StringUtil.isEmpty(machineType2)) calculatorModelRecommend.setMachineType2(Integer.parseInt(machineType2));
+        if (!StringUtil.isEmpty(stretchType)) calculatorModelRecommend.setStretchType(Integer.parseInt(stretchType));
+        if (!StringUtil.isEmpty(stretchScope)) calculatorModelRecommend.setStretchScope(Integer.parseInt(stretchScope));
+        calculatorModelRecommend.setPackType(Integer.parseInt(packType));
+        calculatorModelRecommend.setKgScope(Integer.parseInt(kgScope));
+        calculatorModelRecommend.setModelRecommend(modelRecommend);
+        Integer i = modelService.addCalculatorModelRecommend(calculatorModelRecommend);
+        if (i==201) return new CommonResult(201,"该配置型号已存在");
+        else if (i>0) return new CommonResult(200,"新增成功");
+        return new CommonResult(201,"新增失败");
+    }
+
+    /**
+     * 删除计算机型号推荐
+     * @param request
+     * @return
+     */
+    @PostMapping("/model/delCalculatorModelRecommend")
+    public CommonResult delCalculatorModelRecommend(HttpServletRequest request){
+        String calculatorModelRecommendId = request.getParameter("calculatorModelRecommendId");
+        if (StringUtil.isEmpty(calculatorModelRecommendId)) return new CommonResult(500,"calculatorModelRecommendId 为空");
+        Integer i = modelService.delCalculatorModelRecommend(calculatorModelRecommendId);
+        if (i>0) return new CommonResult(200,"删除成功");
+        return new CommonResult(201,"删除失败");
+    }
+
+    /**
+     * 分页查询计算器型号推荐
+     * @param request
+     * @return
+     */
+    @GetMapping("/model/selectCalculatorModelRecommendPage")
+    public CommonResult selectCalculatorModelRecommendPage(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) return new CommonResult(500,"pageNum 为空");
+        Map<String, String> map = new HashMap<>();
+        map.put("pageNum",pageNum);
+        PageInfo pageInfo = modelService.selectCalculatorModelRecommendPage(map);
+        if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 指定配置新增/修改推荐型号
+     * @param request
+     * @return
+     */
+    @PostMapping("/model/addModelRecommend")
+    public CommonResult addModelRecommend(HttpServletRequest request){
+        String calculatorModelRecommendId = request.getParameter("calculatorModelRecommendId");
+        if (StringUtil.isEmpty(calculatorModelRecommendId)) return new CommonResult(500,"calculatorModelRecommendId 为空");
+        String modelRecommend = request.getParameter("modelRecommend");
+        if (StringUtil.isEmpty(modelRecommend)) return new CommonResult(500,"modelRecommend 为空");
+        Map map = new HashMap();
+        map.put("calculatorModelRecommendId",calculatorModelRecommendId);
+        map.put("modelRecommend",modelRecommend);
+        Integer i = modelService.addModelRecommend(map);
+        if (i>0) return new CommonResult(200,"更新成功");
+        return new CommonResult(201,"更新失败");
+    }
+
+    /**
+     * 通过配置查询推荐型号
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/model/getCalculatorModelRecommend")
+    public CommonResult getCalculatorModelRecommend(HttpServletRequest request){
+//        String calculatorModelRecommendId = request.getParameter("calculatorModelRecommendId");
+//        if (StringUtil.isEmpty(calculatorModelRecommendId)) return new CommonResult(500,"calculatorModelRecommendId 为空");
+        String modelType = request.getParameter("modelType");
+        if (StringUtil.isEmpty(modelType)) return new CommonResult(500,"modelType 为空");
+        String machineType1 = request.getParameter("machineType1");
+//        if (StringUtil.isEmpty(machineType1)) return new CommonResult(500,"machineType1 为空");
+        String machineType2 = request.getParameter("machineType2");
+//        if (StringUtil.isEmpty(machineType2)) return new CommonResult(500,"machineType2 为空");
+        String stretchType = request.getParameter("stretchType");
+//        if (StringUtil.isEmpty(stretchType)) return new CommonResult(500,"stretchType 为空");
+        String stretchScope = request.getParameter("stretchScope");
+//        if (StringUtil.isEmpty(stretchScope)) return new CommonResult(500,"stretchScope 为空");
+        String packType = request.getParameter("packType");
+        if (StringUtil.isEmpty(packType)) return new CommonResult(500,"packType 为空");
+        String kgScope = request.getParameter("kgScope");
+        if (StringUtil.isEmpty(kgScope)) return new CommonResult(500,"kgScope 为空");
+//        String modelRecommend = request.getParameter("modelRecommend");
+//        if (StringUtil.isEmpty(modelRecommend)) return new CommonResult(500,"modelRecommend 为空");
+        CalculatorModelRecommend calculatorModelRecommend = new CalculatorModelRecommend();
+//        calculatorModelRecommend.setId(calculatorModelRecommendId);
+        calculatorModelRecommend.setModelType(Integer.parseInt(modelType));
+        if (!StringUtil.isEmpty(machineType1)) calculatorModelRecommend.setMachineType1(Integer.parseInt(machineType1));
+        if (!StringUtil.isEmpty(machineType2)) calculatorModelRecommend.setMachineType2(Integer.parseInt(machineType2));
+        if (!StringUtil.isEmpty(stretchType)) calculatorModelRecommend.setStretchType(Integer.parseInt(stretchType));
+        if (!StringUtil.isEmpty(stretchScope)) calculatorModelRecommend.setStretchScope(Integer.parseInt(stretchScope));
+        calculatorModelRecommend.setPackType(Integer.parseInt(packType));
+        calculatorModelRecommend.setKgScope(Integer.parseInt(kgScope));
+//        calculatorModelRecommend.setModelRecommend(modelRecommend);
+        CalculatorModelRecommend calculatorModelRecommend1 = modelService.getCalculatorModelRecommend(calculatorModelRecommend);
+        if (calculatorModelRecommend1!=null) return new CommonResult(200,"查询成功",calculatorModelRecommend1);
+        return new CommonResult(201,"该配置没有推荐型号",null);
     }
 
 }

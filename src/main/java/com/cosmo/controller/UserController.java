@@ -7,6 +7,7 @@ import com.cosmo.util.CommonResult;
 import com.cosmo.util.*;
 import org.apache.commons.collections.map.HashedMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +34,9 @@ public class UserController {
         Map<String,Object> map = new HashMap<>();
         map.put("pageNum",request.getParameter("pageNum"));
         map.put("wxName",request.getParameter("wxName"));
+        map.put("name",request.getParameter("name"));
+        map.put("phone",request.getParameter("phone"));
+        map.put("identity",request.getParameter("identity"));
         map.put("serialNumber",request.getParameter("serialNumber"));
         map.put("status",status);
         PageInfo pageInfo = userService.userList(map);
@@ -359,6 +363,173 @@ public class UserController {
     }
 
     /**
+     * 获取首页红包 数据
+     * @return
+     */
+    @GetMapping("/app/user/getHomeCoupon")
+    public CommonResult getHomeCoupon(){
+        return new CommonResult(200,"查询成功",userService.getHomeCoupon());
+    }
+
+    /**
+     * 获取首页红包 数据
+     * @return
+     */
+    @GetMapping("/user/getHomeCoupon")
+    public CommonResult getHomeCoupon1(){
+        return new CommonResult(200,"查询成功",userService.getHomeCoupon());
+    }
+
+    /**
+     * 更新首页红包 数据
+     * @param request
+     * @return
+     */
+    /*@PostMapping("/user/setHomeCoupon")
+    public CommonResult setHomeCoupon(HttpServletRequest request){
+        String value = request.getParameter("value");
+        if (StringUtil.isEmpty(value)) return new CommonResult(500,"value 为空");
+        Integer i = userService.setHomeCoupon(value);
+        if (i>0) return new CommonResult(200,"更新成功");
+        else return new CommonResult(201,"更新失败");
+    }*/
+
+    /**
+     * 新增首页红包 数据
+     * @return
+     */
+    @PostMapping("/user/addHomeCoupon")
+    public CommonResult addHomeCoupon(HttpServletRequest request){
+        String name = request.getParameter("name");
+        if (StringUtil.isEmpty(name)) return new CommonResult(500,"name 为空");
+        String full = request.getParameter("full");
+        if (StringUtil.isEmpty(full)) return new CommonResult(500,"full 为空");
+        String subtract = request.getParameter("subtract");
+        if (StringUtil.isEmpty(subtract)) return new CommonResult(500,"subtract 为空");
+        String time = request.getParameter("time");
+        if (StringUtil.isEmpty(time)) return new CommonResult(500,"time 为空");
+        String type = request.getParameter("type");
+        if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空");
+        Map<String, String> map = new HashMap<>();
+        map.put("name",name);
+        map.put("full",full);
+        map.put("subtract",subtract);
+        map.put("time",time);
+        map.put("type",type);
+        Integer i = userService.addHomeCoupon(map);
+        if (i>0) return new CommonResult(200,"新增成功");
+        else return new CommonResult(201,"新增失败");
+    }
+
+    /**
+     * 删除首页红包 数据
+     * @return
+     */
+    @PostMapping("/user/delHomeCoupon")
+    public CommonResult delHomeCoupon(HttpServletRequest request){
+        String couponHomeId = request.getParameter("couponHomeId");
+        if (StringUtil.isEmpty(couponHomeId)) return new CommonResult(500,"couponHomeId 为空");
+        Integer i = userService.delHomeCoupon(couponHomeId);
+        if (i>0) return new CommonResult(200,"删除成功");
+        else return new CommonResult(201,"删除失败");
+    }
+
+    /**
+     * 首页红包领取
+     * @return
+     */
+    @PostMapping("/app/user/neckHomeCoupon")
+    public CommonResult neckHomeCoupon(HttpServletRequest request){
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        HashMap<String, String> map = new HashMap<>();
+        map.put("userId",userId);
+        Integer i = userService.neckHomeCoupon(map);
+        if (i>0) return new CommonResult(200,"领取成功");
+        else return new CommonResult(201,"领取失败");
+    }
+
+    /**
+     * 分页查询 拥有我分享的红包的用户
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/selectSonUserInfo")
+    public CommonResult selectSonUserInfo(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum = "1";
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        Map map = new HashMap();
+        map.put("pageNum",pageNum);
+        map.put("userId",userId);
+        PageInfo pageInfo = userService.selectSonUserInfo(map);
+        if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 分页查询所有返现红包
+     * status ： 0未使用，1使用后未付款，2使用后已付款，3已过期，4已返现
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/selectSonCoupon")
+    public CommonResult selectSonCoupon(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum = "1";
+        String shareUserId = request.getParameter("shareUserId");//分享者用户id
+        if (StringUtil.isEmpty(shareUserId)) return new CommonResult(500,"shareUserId 为空");
+        String ownUserId = request.getParameter("ownUserId");//拥有者用户id
+        if (StringUtil.isEmpty(ownUserId)) return new CommonResult(500,"ownUserId 为空");
+        String status = request.getParameter("status");
+        if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
+        Map map = new HashMap();
+        map.put("pageNum",pageNum);
+        map.put("shareUserId",shareUserId);
+        map.put("ownUserId",ownUserId);
+        map.put("status",status);
+        PageInfo pageInfo = userService.selectSonCoupon(map);
+        if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 查询拥有 分享的红包 各状态总数量和总返利
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/selectSonCouponInfo")
+    public CommonResult selectSonCouponInfo(HttpServletRequest request){
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        Map map = new HashMap();
+        map.put("userId",userId);
+        Map map1 = userService.selectSonCouponInfo(map);
+        if (map1!=null) return new CommonResult(200,"查询成功",map1);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
+     * 查询指定用户拥有 分享的红包 各状态总数量和总返利
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/selectSonUserCouponInfo")
+    public CommonResult selectSonUserCouponInfo(HttpServletRequest request){
+        String shareUserId = request.getParameter("shareUserId");//分享者用户id
+        if (StringUtil.isEmpty(shareUserId)) return new CommonResult(500,"shareUserId 为空");
+        String ownUserId = request.getParameter("ownUserId");//拥有者用户id
+        if (StringUtil.isEmpty(ownUserId)) return new CommonResult(500,"ownUserId 为空");
+        Map map = new HashMap();
+        map.put("shareUserId",shareUserId);
+        map.put("ownUserId",ownUserId);
+        Map map1 = userService.selectSonUserCouponInfo(map);
+        if (map1!=null) return new CommonResult(200,"查询成功",map1);
+        return new CommonResult(201,"未查询到结果",null);
+    }
+
+    /**
      * 分页查询所有返现红包
      * @param request
      * @return
@@ -387,7 +558,13 @@ public class UserController {
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
         String status = request.getParameter("status");
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
-        PageInfo pageInfo = userService.selectUserCoupon(Integer.parseInt(pageNum),userId,Integer.parseInt(status));
+        String type = request.getParameter("type");
+        HashMap<String, String> map = new HashMap<>();
+        map.put("pageNum",pageNum);
+        map.put("userId",userId);
+        map.put("status",status);
+        map.put("type",type);
+        PageInfo pageInfo = userService.selectUserCoupon(map);
         if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
         return new CommonResult(201,"未查询到结果",null);
     }
@@ -409,6 +586,8 @@ public class UserController {
         if (StringUtil.isEmpty(subtract)) return new CommonResult(500,"subtract 为空");
         String time = request.getParameter("time");
         if (StringUtil.isEmpty(time)) return new CommonResult(500,"time 为空");
+        String type = request.getParameter("type");
+        if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空");
         String number = request.getParameter("number");
         if (StringUtil.isEmpty(number)) return new CommonResult(500,"number 为空");
         Map<String,String> map = new HashMap<>();
@@ -417,6 +596,7 @@ public class UserController {
         map.put("full",full);
         map.put("subtract",subtract);
         map.put("time",time);
+        map.put("type",type);
         map.put("number",number);
         int i = userService.addCoupon(map);
         if (i>0) return new CommonResult(200,"新增成功");
@@ -446,11 +626,13 @@ public class UserController {
         else if (i==2) return new CommonResult(201,"该红包已过期");
         else if (i==3) return new CommonResult(201,"该红包已使用");
         else if (i==5) return new CommonResult(201,"不可领取自己的分享");
+        else if (i==6) return new CommonResult(201,"该优惠卷不是返现卷，不可分享");
         else return new CommonResult(201,"领取失败");
     }
 
     /**
-     * 根据sataus查询该用户的红包
+     * 根据status查询该用户的红包
+     * 新增type参数（不传根据userId和status查，若传根据userId、type和status查）
      * @param request
      * @return
      */
@@ -460,9 +642,11 @@ public class UserController {
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
         String userId = request.getParameter("userId");
         if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        String type = request.getParameter("type");
         Map<String,String> map = new HashMap<>();
         map.put("status",status);
         map.put("userId",userId);
+        map.put("type",type);
         List<Map<String,Object>> coupons = userService.couponList(map);
         if (coupons.size()>0) return new CommonResult(200,"查询成功",coupons);
         return new CommonResult(201,"未查询到结果",null);
@@ -565,9 +749,12 @@ public class UserController {
         if (StringUtil.isEmpty(moneyMin)) return new CommonResult(500,"moneyMin 为空");
         String moneyMax = request.getParameter("moneyMax");
         if (StringUtil.isEmpty(moneyMax)) return new CommonResult(500,"moneyMax 为空");
+        String discounts = request.getParameter("discounts");
+        if (StringUtil.isEmpty(discounts)) return new CommonResult(500,"discounts 为空");
         Map<String,Object> map = new HashMap<>();
         map.put("id",Integer.parseInt(id));map.put("name",name);
         map.put("moneyMin",moneyMin);map.put("moneyMax",moneyMax);
+        map.put("discounts",discounts);
         int i = userService.updateUserMember(map);
         if (i>0) return new CommonResult(200,"修改成功");
         return new CommonResult(201,"修改失败");
@@ -692,6 +879,11 @@ public class UserController {
         String type = request.getParameter("type");
         if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空");//0:把原会员预存金额转为待提现金额 1:把原会员预存金额转为新会员预存金额
         Map<String,String> map = new HashMap<>();
+        if ("0".equals(memberId)){
+            String identity = request.getParameter("identity");
+            if (StringUtil.isEmpty(identity)) return new CommonResult(500,"identity 为空");
+            map.put("identity",identity);
+        }
         map.put("userId",userId);map.put("memberId",memberId);
         map.put("name",name);map.put("phone",phone);map.put("type",type);
         Integer i = userService.addUserMemberApply(map);
@@ -833,6 +1025,12 @@ public class UserController {
         String serialNumber = request.getParameter("serialNumber");
         String status = request.getParameter("status");
         if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
+        String name = request.getParameter("name");
+        if (StringUtil.isEmpty(name)) return new CommonResult(500,"name 为空");
+        String phone = request.getParameter("phone");
+        if (StringUtil.isEmpty(phone)) return new CommonResult(500,"phone 为空");
+        String identity = request.getParameter("identity");
+        if (StringUtil.isEmpty(identity)) return new CommonResult(500,"identity 为空");
         String memberPrice = request.getParameter("memberPrice");
         if (StringUtil.isEmpty(memberPrice)) return new CommonResult(500,"memberPrice 为空");
         String withdrawPrice = request.getParameter("withdrawPrice");
@@ -841,6 +1039,7 @@ public class UserController {
         map.put("userId",userId);map.put("memberId",memberId);map.put("price",price);
         map.put("goldCoin",goldCoin);map.put("serialNumber",serialNumber);
         map.put("status",status);map.put("memberPrice",memberPrice);
+        map.put("name",name);map.put("phone",phone);map.put("identity",identity);
         map.put("withdrawPrice",withdrawPrice);
         Integer i = userService.updateUserInfo(map);
         if (i==201) return new CommonResult(201,"该用户不存在");
@@ -926,4 +1125,155 @@ public class UserController {
         if (i>0) return new CommonResult(200,"修改成功");
         else return new CommonResult(201,"修改失败");
     }
+
+
+    /**
+     * 根据锁价id查询锁价数据
+     * @param request
+     * @return
+     */
+    @GetMapping("/user/selectUserLockById")
+    public CommonResult selectUserLockById(HttpServletRequest request){
+        String userLockId = request.getParameter("userLockId");
+        if (StringUtil.isEmpty(userLockId)) return new CommonResult(500,"userLockId 为空");
+        UserLock userLock = userService.selectUserLockById(userLockId);
+        if (userLock==null) return new CommonResult(201,"未查询到结果",null);
+        else return new CommonResult(200,"查询成功",userLock);
+    }
+
+    /**
+     * 新增采购方信息
+     * @param request
+     * @return
+     */
+    @PostMapping("/app/user/addUserPurchaser")
+    public CommonResult addUserPurchaser(HttpServletRequest request){
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        String companyName = request.getParameter("companyName");
+        if (StringUtil.isEmpty(companyName)) return new CommonResult(500,"companyName 为空");
+        String userName = request.getParameter("userName");
+        if (StringUtil.isEmpty(userName)) return new CommonResult(500,"userName 为空");
+        String phone = request.getParameter("phone");
+        if (StringUtil.isEmpty(phone)) return new CommonResult(500,"phone 为空");
+        String status = request.getParameter("status");
+        if (StringUtil.isEmpty(status)) return new CommonResult(500,"status 为空");
+        HashMap<String, String> map = new HashMap<>();
+        map.put("userId",userId);
+        map.put("companyName",companyName);
+        map.put("userName",userName);
+        map.put("phone",phone);
+        map.put("status",status);
+        Integer i = userService.addUserPurchaser(map);
+        if (i>0) return new CommonResult(200,"新增成功");
+        else return new CommonResult(201,"新增失败");
+    }
+
+    /**
+     * 修改采购方信息
+     * @param request
+     * @return
+     */
+    @PostMapping("/app/user/updateUserPurchaser")
+    public CommonResult updateUserPurchaser(HttpServletRequest request){
+        String userPurchaserId = request.getParameter("userPurchaserId");
+        if (StringUtil.isEmpty(userPurchaserId)) return new CommonResult(500,"userPurchaserId 为空");
+        Map<String, String> map = new HashMap<>();
+        map.put("userPurchaserId",userPurchaserId);
+        String companyName = request.getParameter("companyName");
+        if (!StringUtil.isEmpty(companyName)) map.put("companyName",companyName);
+        String userName = request.getParameter("userName");
+        if (!StringUtil.isEmpty(userName)) map.put("userName",userName);
+        String phone = request.getParameter("phone");
+        if (!StringUtil.isEmpty(phone)) map.put("phone",phone);
+        String status = request.getParameter("status");
+        if (!StringUtil.isEmpty(status)) map.put("status",status);
+        Integer i = userService.updateUserPurchaser(map);
+        if (i>0) return new CommonResult(200,"修改成功");
+        else return new CommonResult(201,"修改失败");
+    }
+
+    /**
+     * 采购方信息设为默认
+     * @param request
+     * @return
+     */
+    @PostMapping("/app/user/updateUserPurchaserStatus")
+    public CommonResult updateUserPurchaserStatus(HttpServletRequest request){
+        String userPurchaserId = request.getParameter("userPurchaserId");
+        if (StringUtil.isEmpty(userPurchaserId)) return new CommonResult(500,"userPurchaserId 为空");
+        Map<String, String> map = new HashMap<>();
+        map.put("userPurchaserId",userPurchaserId);
+        map.put("status","0");
+        Integer i = userService.updateUserPurchaser(map);
+        if (i>0) return new CommonResult(200,"修改成功");
+        else return new CommonResult(201,"修改失败");
+    }
+
+    /**
+     * 删除采购方信息
+     * @param request
+     * @return
+     */
+    @PostMapping("/app/user/delUserPurchaser")
+    public CommonResult delUserPurchaser(HttpServletRequest request){
+        String userPurchaserId = request.getParameter("userPurchaserId");
+        if (StringUtil.isEmpty(userPurchaserId)) return new CommonResult(500,"userPurchaserId 为空");
+        Integer i = userService.delUserPurchaser(userPurchaserId);
+        if (i>0) return new CommonResult(200,"删除成功");
+        else return new CommonResult(201,"删除失败");
+    }
+
+    /**
+     * 根据用户id查询所有采购方信息
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/getUserPurchaserList")
+    public CommonResult getUserPurchaserList(HttpServletRequest request){
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        Map<String, String> map = new HashMap<>();
+        map.put("userId",userId);
+        String companyName = request.getParameter("companyName");
+        if (!StringUtil.isEmpty(companyName)) map.put("companyName",companyName);
+        String userName = request.getParameter("userName");
+        if (!StringUtil.isEmpty(userName)) map.put("userName",userName);
+        String phone = request.getParameter("phone");
+        if (!StringUtil.isEmpty(phone)) map.put("phone",phone);
+        String status = request.getParameter("status");
+        if (!StringUtil.isEmpty(status)) map.put("status",status);
+        List<UserPurchaser> userPurchaserList = userService.getUserPurchaserList(map);
+        if (userPurchaserList.size()>0) return new CommonResult(200,"查询成功",userPurchaserList);
+        else return new CommonResult(201,"未查询到结果");
+    }
+
+    /**
+     * 根据用户id分页查询采购方信息
+     * @param request
+     * @return
+     */
+    @GetMapping("/app/user/getUserPurchaserListPage")
+    public CommonResult getUserPurchaserListPage(HttpServletRequest request){
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum = "1";
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        Map<String, String> map = new HashMap<>();
+        map.put("pageNum",pageNum);
+        map.put("userId",userId);
+        String companyName = request.getParameter("companyName");
+        if (!StringUtil.isEmpty(companyName)) map.put("companyName",companyName);
+        String userName = request.getParameter("userName");
+        if (!StringUtil.isEmpty(userName)) map.put("userName",userName);
+        String phone = request.getParameter("phone");
+        if (!StringUtil.isEmpty(phone)) map.put("phone",phone);
+        String status = request.getParameter("status");
+        if (!StringUtil.isEmpty(status)) map.put("status",status);
+        PageInfo pageInfo = userService.getUserPurchaserListPage(map);
+        if (pageInfo.getList().size()>0) return new CommonResult(200,"查询成功",pageInfo);
+        else return new CommonResult(201,"未查询到结果");
+    }
+
+
 }

@@ -71,6 +71,25 @@ public class WxPayController {
     }
 
     /**
+     * 商城下单支付
+     * @param request
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/app/pay/wxHomePay")
+    public CommonResult wxHomePay(HttpServletRequest request) throws Exception {
+        String userId = request.getParameter("userId");
+        if (StringUtil.isEmpty(userId)) return new CommonResult(500,"userId 为空");
+        String orderId = request.getParameter("orderId");
+        if (StringUtil.isEmpty(orderId)) return new CommonResult(500,"订单id 为空");
+        String type = request.getParameter("type");
+        if (StringUtil.isEmpty(type)) return new CommonResult(500,"支付类型 为空");
+        Map<String, String> map = wxPayService.wxHomePay(userId, orderId,Integer.parseInt(type));
+        if ("0".equals(type)) return new CommonResult(200,"唤起",map);
+        return new CommonResult(200,"唤起",map.get("msg"));
+    }
+
+    /**
      * 根据用户id 充值指定数值的用户余额
      * @param request
      * @return

@@ -88,4 +88,6 @@ public class OrderModel {
 
     private BigDecimal memberDiscount;
 
+    private BigDecimal agoModelTotalPrice;
+
 }

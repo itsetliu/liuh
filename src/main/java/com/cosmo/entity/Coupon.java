@@ -28,6 +28,14 @@ public class Coupon {
 
     private String time;
 
+    private Integer type;
+
+    private String employTime;
+
+    private BigDecimal employPrice;
+
+    private Integer employStatus;
+
     @TableField(exist = false)
     private UserInfo user;
 

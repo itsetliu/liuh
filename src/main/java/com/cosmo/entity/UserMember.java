@@ -18,5 +18,7 @@ public class UserMember {
 
     private BigDecimal moneyMax;
 
+    private String discounts;
+
 
 }

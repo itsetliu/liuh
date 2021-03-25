@@ -69,7 +69,7 @@ public class InvoiceService {
         invoice.setPrice(price);
         Integer i = invoiceMapper.insert(invoice);
         if (i<=0) return i;
-        List<Integer> orderIdList = JSON.parseArray(map.get("orderIdList"),Integer.class);
+        List<String> orderIdList = JSON.parseArray(map.get("orderIdList"),String.class);
         Map<String,Object> map1 = new HashMap<>();
         map1.put("orderIdList",orderIdList);
         map1.put("invoiceId",invoice.getId());

@@ -16,7 +16,11 @@ public class UserInfo {
 
     private String wxName;
 
+    private String name;
+
     private String phone;
+
+    private String identity;
 
     private String email;
 

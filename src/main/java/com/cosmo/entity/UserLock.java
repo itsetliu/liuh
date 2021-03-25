@@ -20,9 +20,17 @@ public class UserLock {
 
     private Integer status;
 
-    private String time;
+    private String timeCreate;
 
-    private BigDecimal balance;
+    private String timeEnd;
+
+    private BigDecimal margin;
+
+    private BigDecimal obligation;
+
+    private BigDecimal price;
+
+    private BigDecimal priceMargin;
 
     private String timestamp;
 

@@ -1,7 +1,10 @@
 package com.cosmo.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cosmo.dao.ConfigMapper;
 import com.cosmo.entity.Config;
+import com.cosmo.entity.Service;
 import com.cosmo.service.ConfigService;
 import com.cosmo.util.CommonResult;
 import com.cosmo.util.*;
@@ -22,15 +25,103 @@ public class ConfigController {
     private ConfigService configService;
 
     /**
+     * 查询所有会员类别和客服
+     * @return
+     */
+    @GetMapping("/app/config/getMemberAndService")
+    public CommonResult getMemberAndService(){
+        return new CommonResult(200,"查询成功",configService.getMemberAndService());
+    }
+
+    /**
+     * 分页条件查询所有客服
+     * @return
+     */
+    @PostMapping("/config/serviceList")
+    public CommonResult serviceList(HttpServletRequest request){
+        QueryWrapper<Service> serviceQueryWrapper = new QueryWrapper<>();
+        String name = request.getParameter("name");
+        if (!StringUtil.isEmpty(name)) serviceQueryWrapper.like("name",name);
+        String wxNumber = request.getParameter("wxNumber");
+        if (!StringUtil.isEmpty(wxNumber)) serviceQueryWrapper.like("wx_number",wxNumber);
+        String pageNum = request.getParameter("pageNum");
+        if (StringUtil.isEmpty(pageNum)) pageNum = "1";
+        Page page = new Page(Integer.parseInt(pageNum),10);
+        return new CommonResult(200,"查询成功",configService.serviceListPage(page,serviceQueryWrapper));
+    }
+
+    /**
+     * 新增客服
+     * @param request
+     * @param file
+     * @return
+     */
+    @PostMapping("/config/addService")
+    public CommonResult addService(HttpServletRequest request, MultipartFile file){
+        String name = request.getParameter("name");
+        if (StringUtil.isEmpty(name)) return new CommonResult(500,"name 为空",null);
+        String wxNumber = request.getParameter("wxNumber");
+        if (StringUtil.isEmpty(wxNumber)) return new CommonResult(500,"wxNumber 为空",null);
+        if (file.isEmpty()) return new CommonResult(500,"图片 为空");
+        Map<String,String> map = new HashMap<>();
+        map.put("name",name);
+        map.put("wxNumber",wxNumber);
+        if (configService.addService(map,file)>0) return new CommonResult(200,"添加成功");
+        return new CommonResult(201,"添加失败");
+    }
+
+    /**
+     * 删除客服
+     * @param request
+     * @return
+     */
+    @PostMapping("/config/delService")
+    public CommonResult delService(HttpServletRequest request){
+        String serviceId = request.getParameter("serviceId");
+        if (StringUtil.isEmpty(serviceId)) return new CommonResult(500,"serviceId 为空",null);
+        if (configService.delService(serviceId)>0) return new CommonResult(200,"删除成功");
+        return new CommonResult(201,"删除失败");
+    }
+
+    /**
      * 查询客服
      * @return
      */
-    @GetMapping("/app/config/customerService")
+    /*@GetMapping("/app/config/customerService")
     public CommonResult customerService(){
         List<Config> configs = configService.customerService("service","2");
         if (configs.size()>0) return new CommonResult(200,"查询成功",configs.get(0).getValue());
         return new CommonResult(201,"查询失败",null);
-    }
+    }*/
+
+    /**
+     * 修改客服
+     * @param request
+     * @param file
+     * @return
+     */
+    /*@PostMapping("/config/updateService")
+    public CommonResult updateService(HttpServletRequest request, MultipartFile file){
+        String name = request.getParameter("name");
+        if (StringUtil.isEmpty(name)) return new CommonResult(500,"name 为空",null);
+        String wx = request.getParameter("wx");
+        if (StringUtil.isEmpty(wx)) return new CommonResult(500,"wx 为空",null);
+        String qq = request.getParameter("qq");
+        if (StringUtil.isEmpty(qq)) return new CommonResult(500,"qq 为空",null);
+        String email = request.getParameter("email");
+        if (StringUtil.isEmpty(email)) return new CommonResult(500,"email 为空",null);
+        String type = request.getParameter("type");
+        if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空",null);
+        if ("1".equals(type))if (file.isEmpty()) return new CommonResult(500,"图片 为空");
+        Map<String,String> map = new HashMap<>();
+        map.put("name",name);
+        map.put("wx",wx);
+        map.put("qq",qq);
+        map.put("email",email);
+        map.put("type",type);
+        if (configService.updateService(map,file)>0) return new CommonResult(200,"更新成功");
+        return new CommonResult(201,"更新失败");
+    }*/
 
     /**
      * 通过code，type查询
@@ -82,35 +173,6 @@ public class ConfigController {
         Config config = configService.codeConfig(code);
         if (config!=null) return new CommonResult(200,"查询成功",config);
         return new CommonResult(201,"未查询到结果",null);
-    }
-
-    /**
-     * 修改客服
-     * @param request
-     * @param file
-     * @return
-     */
-    @PostMapping("/config/updateService")
-    public CommonResult updateService(HttpServletRequest request, MultipartFile file){
-        String name = request.getParameter("name");
-        if (StringUtil.isEmpty(name)) return new CommonResult(500,"name 为空",null);
-        String wx = request.getParameter("wx");
-        if (StringUtil.isEmpty(wx)) return new CommonResult(500,"wx 为空",null);
-        String qq = request.getParameter("qq");
-        if (StringUtil.isEmpty(qq)) return new CommonResult(500,"qq 为空",null);
-        String email = request.getParameter("email");
-        if (StringUtil.isEmpty(email)) return new CommonResult(500,"email 为空",null);
-        String type = request.getParameter("type");
-        if (StringUtil.isEmpty(type)) return new CommonResult(500,"type 为空",null);
-        if ("1".equals(type))if (file.isEmpty()) return new CommonResult(500,"图片 为空");
-        Map<String,String> map = new HashMap<>();
-        map.put("name",name);
-        map.put("wx",wx);
-        map.put("qq",qq);
-        map.put("email",email);
-        map.put("type",type);
-        if (configService.updateService(map,file)>0) return new CommonResult(200,"更新成功");
-        return new CommonResult(201,"更新失败");
     }
 
     /**

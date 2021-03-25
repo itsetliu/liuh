@@ -7,23 +7,34 @@
     update order_form
     <trim prefix="set" suffixOverrides=",">
       <trim prefix="invoice_id =case" suffix="end,">
-        <foreach collection="map.orderIdList" item="orderId" index="index">
-          when id=#{orderId} then #{map.invoiceId}
+        <foreach collection="orderIdList" item="orderId" index="index">
+          when id=#{orderId} then #{invoiceId}
         </foreach>
       </trim>
       <trim prefix="invoice_type =case" suffix="end,">
-        <foreach collection="map.orderIdList" item="orderId" index="index">
-          when id=#{orderId} then #{map.invoiceType}
+        <foreach collection="orderIdList" item="orderId" index="index">
+          when id=#{orderId} then #{invoiceType}
         </foreach>
       </trim>
     </trim>
     where id in
-    <foreach collection="map.orderIdList" item="orderId" index="index" open="(" separator="," close=")">
+    <foreach collection="orderIdList" item="orderId" index="index" open="(" separator="," close=")">
       #{orderId}
     </foreach>
   </update>
 
   <select id="count" parameterType="java.util.HashMap" resultType="java.lang.Integer">
-    select count(id) from order_form where order_time_create <![CDATA[ >= ]]> #{time.create} and order_time_create <![CDATA[ < ]]> #{time.end}
+    select count(id) from order_form where order_time_create <![CDATA[ >= ]]> #{create} and order_time_create <![CDATA[ < ]]> #{end}
+  </select>
+
+  <select id="orderFormList" parameterType="java.util.HashMap" resultType="com.cosmo.entity.OrderForm">
+    select * from order_form where order_time_create <![CDATA[ >= ]]> #{create} and order_time_create <![CDATA[ < ]]> #{end} order by order_time_create desc
+  </select>
+
+  <select id="orderFormMap" parameterType="java.lang.String" resultType="java.util.Map">
+    select oform.id, oform.order_number, oform.order_status, omodel.model_raw_price_type
+    from order_form oform left join order_model omodel on oform.id = omodel.order_id
+    where oform.user_id = #{userId} and oform.order_status = 1 and omodel.model_raw_price_type = 2
+    group by oform.id
   </select>
 </mapper>

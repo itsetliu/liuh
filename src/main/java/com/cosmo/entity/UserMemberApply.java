@@ -20,6 +20,8 @@ public class UserMemberApply {
 
     private String phone;
 
+    private String identity;
+
     private Integer status;
 
     private BigDecimal price;

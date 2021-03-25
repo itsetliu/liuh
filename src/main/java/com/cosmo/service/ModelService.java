@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -38,8 +40,11 @@ public class ModelService {
     private UserLockMapper userLockMapper;
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private CalculatorModelRecommendMapper calculatorModelRecommendMapper;
 
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
 
     /**
      * 查询所有型号
@@ -217,7 +222,7 @@ public class ModelService {
      */
     @Transactional(value="txManager1")
     public Integer updateModel(Map<String,String> map){
-        Model model = modelMapper.selectById(Integer.parseInt(map.get("id")));
+        Model model = modelMapper.selectById(map.get("id"));
         if (!StringUtil.isEmpty(map.get("name"))) model.setName(map.get("name"));
         if (!StringUtil.isEmpty(map.get("typeName"))) model.setTypeName(map.get("typeName"));
         if (!StringUtil.isEmpty(map.get("type"))) model.setType(Integer.parseInt(map.get("type")));
@@ -307,45 +312,48 @@ public class ModelService {
             map.put("suttle",modelShow.getSuttle());
             map.put("pipeWeight",modelShow.getPipeWeight());
             map.put("width",modelShow.getWidth());
-            map.put("thickness",modelShow.getThickness());
+            map.put("thickness",Integer.parseInt(modelShow.getThickness()));
             map.put("scope",modelShow.getScope());
             map.put("volume",modelShow.getVolume());
             //求现售预售
-            Map<String,String> map1 = new HashMap<>();
-            map1.put("pipeWeight",modelShow.getPipeWeight());
-            map1.put("suttle",modelShow.getSuttle());
+//            Map<String,String> map1 = new HashMap<>();
+//            map1.put("pipeWeight",modelShow.getPipeWeight());
+//            map1.put("suttle",modelShow.getSuttle());
             QueryWrapper<ModelThickness> modelThicknessQueryWrapper = new QueryWrapper<>();
-            modelThicknessQueryWrapper.eq("model_id",modelShow.getModelId()).eq("thickness",modelShow.getThickness());
+            modelThicknessQueryWrapper.eq("model_id",modelShow.getModelId()).eq("thickness",Integer.parseInt(modelShow.getThickness()));
             List<ModelThickness> modelThicknesses = modelThicknessMapper.selectList(modelThicknessQueryWrapper);
-            map1.put("processCost",modelThicknesses.get(0).getProcessCost().toString());
-            QueryWrapper<Config> configQueryWrapper1 = new QueryWrapper<>();
-            configQueryWrapper1.eq("code","boxWeigth");
-            List<Config> boxWeigth = configMapper.selectList(configQueryWrapper1);
-            map1.put("boxWeigth",boxWeigth.get(0).getValue());
-            QueryWrapper<Config> configQueryWrapper2 = new QueryWrapper<>();
-            configQueryWrapper2.eq("code","boxPrice");
-//            List<Config> boxPrice = configMapper.selectList(configQueryWrapper2);
-//            map1.put("boxPrice",boxPrice.get(0).getValue());
-            map1.put("boxPrice","7");
-            QueryWrapper<Config> configQueryWrapper3 = new QueryWrapper<>();
-            configQueryWrapper3.eq("code","tubePrice");
-            List<Config> tubePrice = configMapper.selectList(configQueryWrapper3);
-            map1.put("tubePrice",tubePrice.get(0).getValue());
-            QueryWrapper<Config> configQueryWrapper4 = new QueryWrapper<>();
-            configQueryWrapper4.eq("code","trayPrice");
-            List<Config> trayPrice = configMapper.selectList(configQueryWrapper4);
-            map1.put("trayPrice",trayPrice.get(0).getValue());
+//            map1.put("processCost",modelThicknesses.get(0).getProcessCost().toString());
+//            QueryWrapper<Config> configQueryWrapper1 = new QueryWrapper<>();
+//            configQueryWrapper1.eq("code","boxWeigth");
+//            List<Config> boxWeigth = configMapper.selectList(configQueryWrapper1);
+//            map1.put("boxWeigth",boxWeigth.get(0).getValue());
+//            QueryWrapper<Config> configQueryWrapper2 = new QueryWrapper<>();
+//            configQueryWrapper2.eq("code","boxPrice");
+////            List<Config> boxPrice = configMapper.selectList(configQueryWrapper2);
+////            map1.put("boxPrice",boxPrice.get(0).getValue());
+//            map1.put("boxPrice","7");
+//            QueryWrapper<Config> configQueryWrapper3 = new QueryWrapper<>();
+//            configQueryWrapper3.eq("code","tubePrice");
+//            List<Config> tubePrice = configMapper.selectList(configQueryWrapper3);
+//            map1.put("tubePrice",tubePrice.get(0).getValue());
+//            QueryWrapper<Config> configQueryWrapper4 = new QueryWrapper<>();
+//            configQueryWrapper4.eq("code","trayPrice");
+//            List<Config> trayPrice = configMapper.selectList(configQueryWrapper4);
+//            map1.put("trayPrice",trayPrice.get(0).getValue());
             Model model = modelMapper.selectById(modelShow.getModelId());
             Config LLDPE = configMapper.selectById(model.getConfigId());
             List<String> LLDPEList = JSON.parseArray(LLDPE.getValue(),String.class);
 
-            map1.put("LLDPE",(String) JSON.parseObject(LLDPEList.get(0), HashMap.class).get("value"));
-            map.put("nowLLDPE",map1.get("LLDPE"));
-            map.put("now",this.calculate(map1));
-            map1.put("LLDPE",(String) JSON.parseObject(LLDPEList.get(1), HashMap.class).get("value"));
-            map.put("predictLLDPE",map1.get("LLDPE"));
-            map.put("predict",this.calculate(map1));
-            map.put("processCost",map1.get("processCost"));
+//            map1.put("LLDPE",(String) JSON.parseObject(LLDPEList.get(0), HashMap.class).get("value"));
+//            map.put("nowLLDPE",map1.get("LLDPE"));
+            map.put("nowLLDPE",(String) JSON.parseObject(LLDPEList.get(0), HashMap.class).get("value"));
+//            map.put("now",this.calculate(map1));
+//            map1.put("LLDPE",(String) JSON.parseObject(LLDPEList.get(1), HashMap.class).get("value"));
+//            map.put("predictLLDPE",map1.get("LLDPE"));
+            map.put("predictLLDPE",(String) JSON.parseObject(LLDPEList.get(1), HashMap.class).get("value"));
+//            map.put("predict",this.calculate(map1));
+//            map.put("processCost",map1.get("processCost"));
+            map.put("processCost",modelThicknesses.get(0).getProcessCost().toString());
             mapList.add(map);
         }
         return mapList;
@@ -365,7 +373,6 @@ public class ModelService {
         map.put("status",model.getStatus());
         map.put("suttle",model.getSuttle());
         map.put("pipeWeight",model.getPipeWeight());
-        map.put("suttle",model.getSuttle());
         map.put("width",model.getWidth());
         map.put("scope",model.getScope());
         map.put("volume",model.getVolume());
@@ -457,7 +464,7 @@ public class ModelService {
             Map<String,Object> map1 = JSON.parseObject(lockPriceMap,Map.class);
             if (nameList.size()>0){
                 boolean[] is = {true};
-                nameList.forEach(name -> {if (name.equals((String) map1.get("modelName"))){ is[0]=false; return; }});
+                nameList.forEach(name -> {if (name.equals(String.valueOf(map1.get("modelName")))){ is[0]=false; return; }});
                 if (is[0]){
                     nameList.add((String) map1.get("modelName"));
                     mapList.add(map1);
@@ -471,13 +478,33 @@ public class ModelService {
         userLock.setUserId(map.get("userId"));
         userLock.setNumber("lockPrice"+new Date().getTime());
         userLock.setStatus(1);
-        userLock.setTime(sdf.format(new Date()));
+        userLock.setTimeCreate(sdf.format(new Date()));
+        userLock.setMargin(new BigDecimal(map.get("margin")));
+        userLock.setObligation(new BigDecimal(map.get("obligation")));
+        userLock.setPriceMargin(new BigDecimal(map.get("margin")));
+        userLock.setPrice(new BigDecimal(map.get("margin")).add(new BigDecimal(map.get("obligation"))));
         Integer i = userLockMapper.insert(userLock);
         if(i<=0) return null;
         //把锁价数据编号存到redis中
-        Integer lockGuaranteeGoldTime = Integer.parseInt(this.getConfigValue("lockGuaranteeGoldTime"));
-        redisUtil.set("lockPrice1,"+userLock.getId(),"lockPrice1,"+userLock.getId());
-        redisUtil.expire("lockPrice1,"+userLock.getId(),lockGuaranteeGoldTime, TimeUnit.SECONDS);
+//        Integer lockGuaranteeGoldTime = Integer.parseInt(this.getConfigValue("lockGuaranteeGoldTime"));
+        Integer lockGuaranteeGoldTime = 0;
+        Date nowSpecificDate = null;
+        try {
+            nowSpecificDate = sdf.parse(sdf1.format(new Date())+" 08:59:59");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+//        if ((new Date()).compareTo(nowSpecificDate)==-1){//当前时间小于当天 08:59:59
+//            lockGuaranteeGoldTime = (int)((nowSpecificDate.getTime() - (new Date()).getTime())/1000);
+//        }else {//当前时间大于当天 08:59:59
+//            Calendar calendar = Calendar.getInstance();
+//            calendar.setTime(nowSpecificDate);
+//            calendar.add(Calendar.DAY_OF_MONTH, +1);//传入的时间加1天
+//            Date tomorrowSpecificDate = calendar.getTime();
+//            lockGuaranteeGoldTime = (int)((tomorrowSpecificDate.getTime() - (new Date()).getTime())/1000);
+//        }
+//        redisUtil.set("lockPrice1,"+userLock.getId(),"lockPrice1,"+userLock.getId());
+//        redisUtil.expire("lockPrice1,"+userLock.getId(),lockGuaranteeGoldTime, TimeUnit.SECONDS);
         return userLock.getId();
     }
 
@@ -500,13 +527,11 @@ public class ModelService {
     /**
      * 通过锁价数据id修改balance余额,并修改为未完成状态
      * @param userLockId
-     * @param balance
      * @return
      */
-    public Integer updateUserLockBalance(String userLockId,String balance){
-        UserLock userLock = userLockMapper.selectById(Integer.parseInt(userLockId));
-        userLock.setStatus(3);
-        userLock.setBalance(new BigDecimal(balance));
+    public Integer updateUserLockBalance(String userLockId){
+        UserLock userLock = userLockMapper.selectById(userLockId);
+        userLock.setStatus(2);
         return userLockMapper.updateById(userLock);
     }
 
@@ -555,6 +580,85 @@ public class ModelService {
      */
     public Integer delModelCarton(String modelCartonId){
         return modelCartonMapper.deleteById(modelCartonId);
+    }
+
+    /**
+     * 新增计算机型号推荐
+     * @param calculatorModelRecommend
+     * @return
+     *  201: 该配置已存在
+     */
+    public Integer addCalculatorModelRecommend(CalculatorModelRecommend calculatorModelRecommend){
+        QueryWrapper<CalculatorModelRecommend> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("model_type",calculatorModelRecommend.getModelType());
+        if (calculatorModelRecommend.getMachineType1()!=null) queryWrapper.eq("machine_type1",calculatorModelRecommend.getMachineType1());
+        else queryWrapper.isNull("machine_type1");
+        if (calculatorModelRecommend.getMachineType2()!=null) queryWrapper.eq("machine_type2",calculatorModelRecommend.getMachineType2());
+        else queryWrapper.isNull("machine_type2");
+        if (calculatorModelRecommend.getStretchType()!=null) queryWrapper.eq("stretch_type",calculatorModelRecommend.getStretchType());
+        else queryWrapper.isNull("stretch_type");
+        if (calculatorModelRecommend.getStretchScope()!=null) queryWrapper.eq("stretch_scope",calculatorModelRecommend.getStretchScope());
+        else queryWrapper.isNull("stretch_scope");
+        queryWrapper.eq("pack_type",calculatorModelRecommend.getPackType());
+        queryWrapper.eq("kg_scope",calculatorModelRecommend.getKgScope());
+        List<CalculatorModelRecommend> calculatorModelRecommendList = calculatorModelRecommendMapper.selectList(queryWrapper);
+        if (calculatorModelRecommendList.size()>0) return 201;
+        return calculatorModelRecommendMapper.insert(calculatorModelRecommend);
+    }
+
+    /**
+     * 删除计算器型号推荐
+     * @param calculatorModelRecommendId
+     * @return
+     */
+    public Integer delCalculatorModelRecommend(String calculatorModelRecommendId){
+        return calculatorModelRecommendMapper.deleteById(calculatorModelRecommendId);
+    }
+
+    /**
+     * 分页查询计算器型号推荐
+     * @param map
+     * @return
+     */
+    public PageInfo selectCalculatorModelRecommendPage(Map<String, String> map){
+        Page page = new Page(Long.valueOf(map.get("pageNum")),10);
+        return new PageInfo(calculatorModelRecommendMapper.selectPage(page,null));
+    }
+
+    /**
+     * 指定配置新增/修改推荐型号
+     * @param map
+     * @return
+     */
+    public Integer addModelRecommend(Map<String, String> map){
+        QueryWrapper<CalculatorModelRecommend> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("id", map.get("calculatorModelRecommendId"));
+        CalculatorModelRecommend calculatorModelRecommend = new CalculatorModelRecommend();
+        calculatorModelRecommend.setModelRecommend(map.get("modelRecommend"));
+        return calculatorModelRecommendMapper.update(calculatorModelRecommend,queryWrapper);
+    }
+
+    /**
+     * 通过配置查询推荐型号
+     * @param calculatorModelRecommend
+     * @return
+     */
+    public CalculatorModelRecommend getCalculatorModelRecommend(CalculatorModelRecommend calculatorModelRecommend){
+        QueryWrapper<CalculatorModelRecommend> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("model_type",calculatorModelRecommend.getModelType());
+        if (calculatorModelRecommend.getMachineType1()!=null) queryWrapper.eq("machine_type1",calculatorModelRecommend.getMachineType1());
+        else queryWrapper.isNull("machine_type1");
+        if (calculatorModelRecommend.getMachineType2()!=null) queryWrapper.eq("machine_type2",calculatorModelRecommend.getMachineType2());
+        else queryWrapper.isNull("machine_type2");
+        if (calculatorModelRecommend.getStretchType()!=null) queryWrapper.eq("stretch_type",calculatorModelRecommend.getStretchType());
+        else queryWrapper.isNull("stretch_type");
+        if (calculatorModelRecommend.getStretchScope()!=null) queryWrapper.eq("stretch_scope",calculatorModelRecommend.getStretchScope());
+        else queryWrapper.isNull("stretch_scope");
+        queryWrapper.eq("pack_type",calculatorModelRecommend.getPackType());
+        queryWrapper.eq("kg_scope",calculatorModelRecommend.getKgScope());
+        List<CalculatorModelRecommend> calculatorModelRecommendList = calculatorModelRecommendMapper.selectList(queryWrapper);
+        if (calculatorModelRecommendList.size()>0) return calculatorModelRecommendList.get(0);
+        return null;
     }
 
 }

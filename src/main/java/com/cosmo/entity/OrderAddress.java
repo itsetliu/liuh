@@ -46,6 +46,12 @@ public class OrderAddress {
 
     private String orderAddressLogisticsNumber;
 
+    private BigDecimal agoOrderAddressFreightPrice;
+
+    private BigDecimal agoOrderAddressFreight;
+
+    private BigDecimal agoOrderAddressPrice;
+
     @TableField(exist = false)
     private List<OrderModel> orderModelList;
 

@@ -9,7 +9,7 @@ import org.springframework.core.io.Resource;
 import javax.net.ssl.SSLContext;
 import java.security.KeyStore;
 
-public class HttpUtils {
+public class WxHttpUtils {
 
 
     private static final String DEFAULT_CHARSET = "UTF-8";
