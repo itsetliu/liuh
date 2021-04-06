@@ -6,5 +6,6 @@ import lombok.Data;
 public class HomeTitle {
     private String id;
     private String title;
+    private String type;
 }
 
