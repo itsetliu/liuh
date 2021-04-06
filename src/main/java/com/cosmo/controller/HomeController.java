@@ -275,8 +275,10 @@ public class HomeController {
     @GetMapping("/app/homePageDisplay/datails")
     public CommonResult Homedatails(HttpServletRequest request){
         String commodityId=request.getParameter("commodityId");
+        String type=request.getParameter("type");
         if(StringUtil.isEmpty(commodityId)){return new CommonResult(500,"commodityId为空~");}
-        Object object = homeService.Homedatails(commodityId);
+        if(StringUtil.isEmpty(type)){return new CommonResult(500,"type为空~");}
+        Object object = homeService.Homedatails(commodityId,Integer.parseInt(type));
         return ((Collection) object).isEmpty()?new CommonResult(201,"暂无数据~",null)
                 :new CommonResult(200,"查询成功",object);
 

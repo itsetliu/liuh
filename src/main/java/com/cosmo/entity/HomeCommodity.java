@@ -17,8 +17,6 @@ public class HomeCommodity {
 
         private String model;
 
-        private String volume;
-
         private String thickness;
 
         private String width;
@@ -39,35 +37,16 @@ public class HomeCommodity {
 
         private BigDecimal moeny;
 
-        @TableField("labelType")
-        private String labelType;
-
-        @TableField("trayType")
-        private String trayType;
-
-        @TableField("traySum")
-        private String traySum;
-
         @TableField("boxVolume")
         private String boxVolume;
 
-        @TableField("boxType")
-        private String boxType;
-
-        @TableField("boxSumOrVolumeSum")
-        private String boxSumOrVolumeSum;
 
         @TableField("homeProductId")
         private String homeProductId;
 
-        @TableField("totalWeight")
-        private String totalWeight;//总净重
 
         @TableField("cartonWeight")
         private String cartonWeight; //箱重
-
-        @TableField("boxNumber")
-        private String boxNumber;//纸箱数量
 
         @TableField("modelType")
         private String modelType;//型号类型0手用膜，1机用膜
@@ -83,5 +62,20 @@ public class HomeCommodity {
 
         @TableField("cartonPrice")
         private String cartonPrice;//纸箱单价
+
+        @TableField("typeOfMerchandise")
+        private String typeOfMerchandise;
+
+        @TableField("variety")
+        private String variety;
+
+        @TableField("offUniwafer")
+        private String offUniwafer;
+
+        @TableField("packingQuantity")
+        private String packingQuantity;
+
+        @TableField("commodityImage")
+        private String commodityImage;
 }
 

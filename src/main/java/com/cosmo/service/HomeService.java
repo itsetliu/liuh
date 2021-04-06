@@ -74,9 +74,10 @@ public class HomeService {
         }
 
         /*商品详情*/
-        public Object Homedatails(String homeProductId ){
+        public Object Homedatails(String homeProductId,int type ){
             QueryWrapper wrapper=new QueryWrapper();
             wrapper.eq("homeProductId", homeProductId);
+            wrapper.eq("typeOfMerchandise",type);
             wrapper.orderBy(true,true,"model");
             Object obj=homeCommodityMapper.selectList(wrapper);
             return obj;
